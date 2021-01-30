@@ -24,16 +24,25 @@ namespace Full
             crBot = new ClassroomBot(config);
             OnMessageReceived += Greet;
             this.config = config;
+            Login();
         }
         public Classroom(LangConfig config, CancellationToken token) : this(config)
         {
             this.token = token;
             token.Register(() => logger.Debug("Cancellation requested for classroom"));
         }
+        public Meet InitMeetInstance(CancellationToken token)
+        {
+            string meetLink = crBot.GetClassroomMeetLink();
+
+            Meet meet = new Meet(config, meetLink, token);
+
+            OnGreetingReceived += meet.ReceiveStartMessage;
+            return meet;
+        }
 
         public async Task Start()
         {
-            Login();
             await GetMessageLoop();
         }
         public async Task GetMessageLoop()
@@ -43,12 +52,14 @@ namespace Full
             {
                 if (token.IsCancellationRequested)
                 {
+                    logger.Debug("Succesfully canceled");
                     break;
                 }
                 Message latest = crBot.GetMessage(0);
-                if (!latest.Equals(last))
+                if ((Message)latest != last)
                 {
-                    logger.Debug("Received message from " + latest.Teacher);
+                    logger.Debug("Received message from {0}", latest.Teacher);
+                    logger.Trace(latest);
                     OnMessageReceived?.Invoke(crBot, new DataEventArgs<Message>(latest, last));
                     last = latest;
                 }
@@ -75,6 +86,8 @@ namespace Full
                 if (!Utils.IsLangClass(latest) && !Utils.IsLangClass(previous))
                 {
                     latest = LangGroupFilter(bot, latest);
+                    if (latest == null)
+                        logger.Error("Can't find language group's teacher's message");
 
                     if (!bot.WrittenCommentOn(latest))
                     {

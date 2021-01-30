@@ -104,31 +104,26 @@ namespace GCRBot
             );
             try
             {
-                firstLoad.Until(driver =>
-                    comments.FindElement(By.XPath(".//div[last()]")).Enabled
-                );
-                IWebElement el = message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton]);
-                if (el.Enabled && el.Displayed)
-                {
-                    return GetNumbersFrom(el.Text);
-                }
+                IWebElement commentsButton = message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton]);
+
+                firstLoad.Until(driver => commentsButton.Enabled && commentsButton.Displayed);
+
+                return GetNumbersFrom(commentsButton.Text);
             }
-            catch (Exception ex)
+            catch (WebDriverTimeoutException)
             {
-                if (ex is NoSuchElementException || ex is WebDriverTimeoutException)
-                {
-                    return 0;
-                }
-                logger.Error(ex);
-                throw;
+                return 0;
             }
-            logger.Error("Fuck");
-            return 0;
         }
         private int GetNumbersFrom(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                throw new ArgumentNullException(nameof(text));
+            }
             Regex regex = new Regex("[0-9]*");
-            return int.Parse(regex.Match(text).Value.Trim());
+            Match match = regex.Match(text);
+            return int.Parse(match.Value);
         }
     }
 }

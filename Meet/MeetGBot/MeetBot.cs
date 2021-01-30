@@ -51,7 +51,7 @@ namespace MeetGBot
         {
             IWebElement hangup = defaultWait.Until(driver =>
                 driver.FindElement(
-                    selectors[Elements.HangupButton]
+                    selectors[Elements.MeetHangupButton]
                 )
             );
             logger.Debug("Hanging up");
@@ -68,7 +68,7 @@ namespace MeetGBot
             }
 
             IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
-            userWait.Until(driver => joinButton.Displayed);
+            firstLoad.Until(driver => joinButton.Displayed);
             logger.Debug("Joining meet");
             joinButton.Click();
             State = MeetState.InCall;
@@ -99,9 +99,13 @@ namespace MeetGBot
                 throw new Exception("Not in meet call");
             }
             IWebElement el = firstLoad.Until(driver =>
-                driver.FindElement(selectors[Elements.ChatButton])
+                driver.FindElement(selectors[Elements.MeetChatButton])
             );
-            return int.Parse(el.Text.Trim());
+
+            Regex reg = new Regex("[0-9]*");
+            Match match = reg.Match(el.Text);
+
+            return int.Parse(match.Value);
         }
         public int PeopleInMeetOverview()
         {
@@ -136,6 +140,18 @@ namespace MeetGBot
                 return split.Count + val;
             }
         }
+        public bool CanJoin()
+        {
+            if (State != MeetState.InOverview)
+            {
+                throw new Exception("Not in meet overview");
+            }
+            IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
+            firstLoad.Until(driver => joinButton.Displayed);
+            string text = joinButton.Text.Trim();
+            // logger.Debug("Join button text: '{0}'", text);
+            return !(text.Contains("Ask") || text.Contains("Молба"));
+        }
 
         public void LeaveMeet()
         {
@@ -161,7 +177,7 @@ namespace MeetGBot
 
         private void MuteElement(string element)
         {
-            logger.Trace("Muting element " + element);
+            logger.Debug("Muting element " + element);
             IWebElement webElement = defaultWait.Until(driver =>
             {
                 // Console.WriteLine("Polling for mic");

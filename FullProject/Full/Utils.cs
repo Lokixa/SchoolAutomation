@@ -63,5 +63,18 @@ namespace Full
             Match match = meetLinkReg.Match(text);
             return match.Value;
         }
+        public static bool TryGetNumber(string text, out int result)
+        {
+            Regex reg = new Regex("[0-9]*");
+            Match match = reg.Match(text);
+            if (match.Success
+                && !string.IsNullOrEmpty(match.Value))
+            {
+                result = int.Parse(match.Value);
+                return true;
+            }
+            result = 0;
+            return false;
+        }
     }
 }

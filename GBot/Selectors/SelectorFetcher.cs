@@ -16,11 +16,11 @@ namespace GBot
         private HashSet<Type> TypesToTraverse;
         const int POST_DEPTH = 30;
 
-        public SelectorFetcher(IWebDriver driver)
+        public SelectorFetcher(IWebDriver Driver)
         {
-            this.driver = driver;
-            wait = new WebDriverWait(driver, new TimeSpan(0, 0, 0, 0, 500));
-            firstWait = new WebDriverWait(driver, new TimeSpan(0, 0, 4));
+            this.driver = Driver;
+            wait = new WebDriverWait(Driver, new TimeSpan(0, 0, 0, 0, 500));
+            firstWait = new WebDriverWait(Driver, new TimeSpan(0, 0, 4));
             logger = NLog.LogManager.GetCurrentClassLogger();
             TypesToTraverse = new();
         }
@@ -40,14 +40,14 @@ namespace GBot
             var fromSel = typeof(T).GetCustomAttribute<FromSelector>();
             return Fill<T>(fromSel.Selector);
         }
-        internal T Fill<T>(string baseSelector) where T : new()
+        internal T Fill<T>(string BaseSelector) where T : new()
         {
-            bool isXpath = IsXpath(baseSelector);
+            bool isXpath = IsXpath(BaseSelector);
             var selAttr = typeof(T).GetCustomAttribute<FromSelector>();
             T fill = new T();
 
             Queue<(object, string)> queue = new();
-            queue.Enqueue((fill, baseSelector));
+            queue.Enqueue((fill, BaseSelector));
             while (queue.Count > 0)
             {
                 (object @class, string baseSel) = queue.Dequeue();
@@ -65,8 +65,9 @@ namespace GBot
                             {
                                 throw new InvalidSelectorException("Class and properties have different types");
                             }
-                            selector = baseSelector + selector;
+                            selector = BaseSelector + selector;
                         }
+
                         if (TypesToTraverse.Contains(prop.PropertyType))
                         {
                             if (prop.PropertyType == @class.GetType())
@@ -86,10 +87,6 @@ namespace GBot
                         else
                         {
                             IWebElement el = Fetch(selector, isXpath);
-                            if (!el.Displayed)
-                            {
-                                throw new ElementNotVisibleException();
-                            }
                             object value = Parse(el, prop.PropertyType);
                             prop.SetValue(@class, value);
                         }
@@ -107,42 +104,43 @@ namespace GBot
             return fill;
         }
 
-        private bool IsXpath(string baseSelector)
+        private bool IsXpath(string BaseSelector)
         {
-            if (baseSelector.Length == 0)
+            if (BaseSelector.Length == 0)
             {
-                throw new ArgumentException(nameof(baseSelector));
+                throw new ArgumentException(nameof(BaseSelector));
             }
-            if (baseSelector.Trim()[0] == '/') return true;
+            if (BaseSelector.Trim()[0] == '/') return true;
             return false;
         }
 
-        private IWebElement Fetch(string selector, bool isXpath)
+        private IWebElement Fetch(string Selector, bool IsXpath)
         {
             WebDriverWait waiter = firstWait ?? wait;
-            IWebElement el;
-            if (isXpath)
+            logger.Trace("Fetching {0} with {1} timeout", Selector, waiter.Timeout);
+            By by;
+            if (IsXpath)
             {
-                el = waiter.Until(driver =>
-                   driver.FindElement(By.XPath(selector))
-                );
+                by = By.XPath(Selector);
             }
             else
             {
-                el = waiter.Until(driver =>
-                  driver.FindElement(By.CssSelector(selector))
-                );
+                by = By.CssSelector(Selector);
             }
+            IWebElement el = waiter.Until(driver =>
+               driver.FindElement(by)
+            );
+            waiter.Until(driver => el.Displayed);
             if (firstWait != null) firstWait = null;
             return el;
         }
 
-        private object Parse(IWebElement el, Type propType)
+        private object Parse(IWebElement Element, Type PropType)
         {
             object value = null;
-            if (propType == typeof(string))
+            if (PropType == typeof(string))
             {
-                value = el.Text;
+                value = Element.Text;
             }
 
             return value;
@@ -152,53 +150,58 @@ namespace GBot
         /// <summary>
         /// Enumerates from top of classroom: '{index}' in T's selectors
         /// </summary>
-        /// <param name="index">Index from top of classroom.</param>
-        /// <param name="found">
+        /// <param name="Index">Index from top of classroom.</param>
+        /// <param name="Found">
         /// Predicate used in searching for valid item.
         /// <br/>
         /// Default is item != null
         /// </param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public T Get<T>(int index, Predicate<T> found = null) where T : new()
+        public T Get<T>(int Index, Predicate<T> Found = null) where T : new()
         {
-            if (found == null)
+            if (Found == null)
             {
-                found = item => item != null;
+                Found = item => item != null;
             }
             var type = typeof(T);
             FromSelector baseClass = type.GetCustomAttribute<FromSelector>();
             //TODO REFACTOR
             T item = default(T);
-            for (int i = 1; index >= 0;)
+            for (int i = 1; Index >= 0;)
             {
                 do
                 {
                     string selector = baseClass.Selector.Replace("{index}", i.ToString());
+                    logger.Trace("Trying to fetch '{0}'", selector);
                     try
                     {
                         item = Fill<T>(selector);
                     }
-                    catch //(Exception ex)
+                    catch (WebDriverTimeoutException)
                     {
                         item = default(T);
                     }
+                    catch (Exception ex)
+                    {
+                        logger.Debug(ex);
+                    }
                     i++;
-                } while (!found(item) && i < POST_DEPTH);
-                index--;
+                } while (!Found(item) && i < POST_DEPTH);
+                Index--;
             }
 
             return item;
         }
-        public T FindAfter<T>(T item, int times) where T : new()
+        public T FindAfter<T>(T Item, int Times) where T : new()
         {
             T el = default(T);
             FromSelector baseClass = typeof(T).GetCustomAttribute<FromSelector>();
             bool isXpath = baseClass is FromXPath;
             int i = 1;
             bool found = false;
-            logger.Trace("Received {0}", item);
-            while (times >= 0)
+            logger.Trace("Received {0}", Item);
+            while (Times >= 0)
             {
                 do
                 {
@@ -214,13 +217,13 @@ namespace GBot
                     }
                     i++;
                 } while (el == null && i < POST_DEPTH);
-                if (el.Equals(item))
+                if (el.Equals(Item))
                 {
                     found = true;
                 }
                 if (found)
                 {
-                    times--;
+                    Times--;
                 }
             }
             return el;

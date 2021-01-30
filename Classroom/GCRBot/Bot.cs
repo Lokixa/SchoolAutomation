@@ -54,10 +54,18 @@ namespace GCRBot
         }
         public string GetClassroomMeetLink()
         {
-            IWebElement link = firstLoad.Until(driver =>
-                driver.FindElement(selectors[Elements.ClassroomMeetLink])
-            );
-            return link.Text;
+            try
+            {
+                IWebElement link = firstLoad.Until(driver =>
+                    driver.FindElement(selectors[Elements.ClassroomMeetLink])
+                );
+                return link.Text;
+            }
+            catch (WebDriverTimeoutException)
+            {
+                logger.Warn("No default meet link in classroom");
+                return "";
+            }
         }
         void UpdateFeed()
         {

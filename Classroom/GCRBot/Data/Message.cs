@@ -10,7 +10,7 @@ namespace GCRBot.Data
         public string Teacher { get; init; }
         [FromXPath("/div[1]/div[1]/div[1]/span/span[2]")]
         public string Timestamp { get; init; }
-        [FromXPath("/div[1]/div[2]/div[1]/html-blob/span")]
+        [FromXPath("/div[1]/div[2]/div[1]/html-blob")]
         public string Information { get; init; }
         public IWebElement WebElement { get; init; }
     };
