@@ -33,7 +33,7 @@ namespace MeetGBot
         public MeetBot(Config config) : base(FixConfig(config))
         {
             selectors = new MeetSelectorFactory().Get(config.Driver.Browser);
-            State = MeetState.NotLoggedIn;
+            ChangeState(MeetState.NotLoggedIn);
         }
 
         public bool Login()
@@ -41,8 +41,7 @@ namespace MeetGBot
             bool loggedIn = base.Login(goToConfigLink: false);
             if (loggedIn)
             {
-                State = MeetState.OutsideMeet;
-                logger.Trace("State change to " + State);
+                ChangeState(MeetState.OutsideMeet);
             }
             return loggedIn;
         }
@@ -56,23 +55,21 @@ namespace MeetGBot
             );
             logger.Debug("Hanging up");
             hangup.Click();
-            State = MeetState.OutsideMeet;
-            logger.Trace("State change to " + State);
+            ChangeState(MeetState.OutsideMeet);
         }
 
         public void EnterMeet()
         {
             if (State != MeetState.InOverview)
             {
-                throw new Exception("Not in meet overview");
+                throw new InvalidOperationException("Not in meet overview");
             }
 
             IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
             firstLoad.Until(driver => joinButton.Displayed);
             logger.Debug("Joining meet");
             joinButton.Click();
-            State = MeetState.InCall;
-            logger.Trace("State change to " + State);
+            ChangeState(MeetState.InCall);
         }
 
         public void EnterMeetOverview(string link)
@@ -80,14 +77,13 @@ namespace MeetGBot
             driver.Navigate().GoToUrl(link);
             if (link.Contains("/lookup/"))
             {
-                logger.Trace("In lookup");
-                Regex meetLinkReg = new Regex(@"https:\/\/meet.google.com\/([A-Za-z]{3}-?)([a-zA-Z]{4}-?)([A-Za-z]{3}-?)");
+                logger.Debug("In lookup");
+                Regex meetLinkReg = new Regex(@"https:\/\/meet.google.com\/([A-Za-z]{3}-?)([a-zA-Z]{4}-?)([A-Za-z]{3})");
                 firstLoad.Until(driver => meetLinkReg.Match(driver.Url).Success);
             }
             else firstLoad.Until(driver => driver.Url == link);
 
-            State = MeetState.InOverview;
-            logger.Trace("State change to " + State);
+            ChangeState(MeetState.InOverview);
 
             MuteElement(Elements.MicrophoneButton);
             MuteElement(Elements.CameraButton);
@@ -96,7 +92,7 @@ namespace MeetGBot
         {
             if (State != MeetState.InCall)
             {
-                throw new Exception("Not in meet call");
+                throw new InvalidOperationException("Not in meet call");
             }
             IWebElement el = firstLoad.Until(driver =>
                 driver.FindElement(selectors[Elements.MeetChatButton])
@@ -111,7 +107,7 @@ namespace MeetGBot
         {
             if (State != MeetState.InOverview)
             {
-                throw new Exception("Not in meet overview");
+                throw new InvalidOperationException("Not in meet overview");
             }
             string peopleInCall = defaultWait.Until(driver =>
                 driver.FindElement(selectors[Elements.PeopleInCallOverview])
@@ -135,7 +131,7 @@ namespace MeetGBot
             }
             else
             {
-                logger.Trace("Got {0} more people", match.Value);
+                // logger.Trace("Got {0} more people", match.Value);
                 int val = int.Parse(match.Value);
                 return split.Count + val;
             }
@@ -144,7 +140,7 @@ namespace MeetGBot
         {
             if (State != MeetState.InOverview)
             {
-                throw new Exception("Not in meet overview");
+                throw new InvalidOperationException("Not in meet overview");
             }
             IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
             firstLoad.Until(driver => joinButton.Displayed);
@@ -157,7 +153,7 @@ namespace MeetGBot
         {
             if (State != MeetState.InCall)
             {
-                throw new Exception("Not in meet");
+                throw new InvalidOperationException("Not in meet");
             }
             Hangup();
         }
@@ -177,23 +173,27 @@ namespace MeetGBot
 
         private void MuteElement(string element)
         {
-            logger.Debug("Muting element " + element);
             IWebElement webElement = defaultWait.Until(driver =>
             {
-                // Console.WriteLine("Polling for mic");
+                logger.Trace("Polling for {0}", element);
                 return driver.FindElement(selectors[element]);
             });
             userWait.Until(driver =>
             {
-                // Console.WriteLine("Polling for mic enabled and displayed");
+                logger.Trace("Polling for {0} enabled and displayed", element);
                 return webElement.Enabled && webElement.Displayed;
             });
             string muted = webElement.GetAttribute("data-is-muted");
             if (bool.TryParse(muted, out bool result) && !result)
             {
                 webElement.Click();
-                // Console.WriteLine("Mic is muted");
+                logger.Debug("{0} is muted", element);
             }
+        }
+        private void ChangeState(MeetState state)
+        {
+            logger.Debug("Changing state {0} => {1}", State, state);
+            State = state;
         }
         public override void Dispose()
         {

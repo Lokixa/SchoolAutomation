@@ -43,7 +43,6 @@ namespace GBot
             firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
 
             bool loadedCookies = LoadCookies(CookiesPath);
-            logger.Debug("Loaded cookies: " + loadedCookies);
 
             driver.Navigate().GoToUrl(LoginLink);
 
@@ -107,7 +106,6 @@ namespace GBot
         protected bool LoadCookies(string cookiePath)
         {
             if (!File.Exists(cookiePath)) return false;
-            logger.Trace("Loading cookies from " + cookiePath);
             var dictArr = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(File.ReadAllText(cookiePath));
             var cookies = driver.Manage().Cookies;
             int addedCookies = 0;

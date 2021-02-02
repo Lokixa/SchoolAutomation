@@ -19,7 +19,6 @@ namespace GCRBot
                 message.WebElement.FindElement(selectors[Elements.RelativeMessageInput])
             );
             el.SendKeys(text);
-            logger.Trace($"Sending {text} to message");
             return el;
         }
         /// <summary>
@@ -73,7 +72,6 @@ namespace GCRBot
                     string fullSelector = $".//div[{i}]/div/div/div/div[1]/div[2]/div[1]";
                     IWebElement settings = comments.FindElement(By.XPath(fullSelector));
                     string label = settings.GetAttribute("aria-label");
-                    logger.Trace("Got label {0} from '{1}'", label, fullSelector);
                     if (IsOwnComment(label)) return true;
                 }
                 return false;

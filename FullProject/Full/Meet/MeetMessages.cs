@@ -9,7 +9,7 @@ namespace Full
         public MeetMessage(Message original) : base(original)
         {
             MeetLink = Utils.GetMeetLink(original.Information);
-            IsLanguageClass = Utils.IsLangClass(original);
+            IsLanguageClass = Utils.IsLanguageClass(original);
         }
     }
 }

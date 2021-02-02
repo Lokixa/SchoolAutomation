@@ -51,49 +51,64 @@ namespace Full
 
         private async Task MeetLoop()
         {
-            while (true)
+            try
             {
-                if (token.IsCancellationRequested)
+                while (true)
                 {
-                    logger.Debug("Succesfully canceled");
-                    break;
-                }
-                string link = DefaultMeetLink;
-
-                if (StartMessageReceived(out MeetMessage msg)
-                    && !string.IsNullOrWhiteSpace(msg.MeetLink))
-                {
-                    link = msg.MeetLink;
-                    logger.Debug("Got link from message '{0}'", link);
-                }
-
-                if (MeetExists(link))
-                {
-                    bool langClass = msg?.IsLanguageClass ?? false;
-
-                    int peopleNeeded = GetPeopleNeeded(langClass);
-
-                    if (meetBot.CanJoin())
+                    if (token.IsCancellationRequested)
                     {
-                        int peopleInOverview = meetBot.PeopleInMeetOverview();
-
-                        while (peopleInOverview < peopleNeeded)
-                        {
-                            await Task.Delay(new TimeSpan(0, 0, seconds: 3), token);
-                            peopleInOverview = meetBot.PeopleInMeetOverview();
-                        }
-
-                        logger.Info("Entering meet");
-                        logger.Debug(" with {0} people", peopleInOverview);
-                        meetBot.EnterMeet();
-
-                        await WaitPeopleToLeave(minimumPeople: peopleNeeded);
-
-                        logger.Info("Leaving meet");
-                        meetBot.LeaveMeet();
+                        logger.Debug("Succesfully canceled");
+                        break;
                     }
+                    string link = DefaultMeetLink;
+
+                    if (StartMessageReceived(out MeetMessage msg)
+                        && !string.IsNullOrWhiteSpace(msg.MeetLink))
+                    {
+                        link = msg.MeetLink;
+                        logger.Debug("Got link from message '{0}'", link);
+                    }
+
+                    if (MeetExists(link))
+                    {
+                        bool langClass = msg?.IsLanguageClass ?? false;
+
+                        int peopleNeeded = GetPeopleNeeded(langClass);
+
+                        if (meetBot.CanJoin())
+                        {
+                            int peopleInOverview = meetBot.PeopleInMeetOverview();
+
+                            int seconds = 3;
+                            // Wait two minutes
+                            for (int i = 0; i < (60 * 2 / seconds) && peopleInOverview < peopleNeeded; i++)
+                            {
+                                await Task.Delay(new TimeSpan(0, 0, seconds), token);
+                                peopleInOverview = meetBot.PeopleInMeetOverview();
+                            }
+                            // Only if people needed is met
+                            // we enter meet
+                            if (peopleInOverview >= peopleNeeded)
+                            {
+                                logger.Info("Entering meet");
+                                logger.Debug(" with {0} people", peopleInOverview);
+                                meetBot.EnterMeet();
+
+                                await WaitPeopleToLeave(minimumPeople: peopleNeeded);
+
+                                logger.Info("Leaving meet");
+                                meetBot.LeaveMeet();
+                            }
+                            logger.Debug("Back to meet loop");
+                        }
+                    }
+
+                    await Task.Delay(new TimeSpan(0, 0, seconds: 30), token);
                 }
-                await Task.Delay(new TimeSpan(0, 0, seconds: 30), token);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
             }
         }
 
@@ -127,7 +142,7 @@ namespace Full
                     break;
                 }
 
-                await Task.Delay(new TimeSpan(0, 0, seconds: 10), token);
+                await Task.Delay(new TimeSpan(0, 0, seconds: 5), token);
             }
 
         }
@@ -138,11 +153,11 @@ namespace Full
             //TODO REPLACE CONSTANTS
             if (languageClass)
             {
-                peopleNeeded = 5;
+                peopleNeeded = 4;
             }
             else
             {
-                peopleNeeded = 11;
+                peopleNeeded = 12;
             }
 
             return peopleNeeded;

@@ -49,7 +49,7 @@ namespace Full
             }
             return success;
         }
-        public static bool IsLangClass(Message msg)
+        public static bool IsLanguageClass(Message msg)
         {
             if (msg == null)
             {

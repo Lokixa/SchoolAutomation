@@ -117,7 +117,7 @@ namespace GBot
         private IWebElement Fetch(string Selector, bool IsXpath)
         {
             WebDriverWait waiter = firstWait ?? wait;
-            logger.Trace("Fetching {0} with {1} timeout", Selector, waiter.Timeout);
+            // logger.Trace("Fetching {0} with {1} timeout", Selector, waiter.Timeout);
             By by;
             if (IsXpath)
             {
@@ -173,7 +173,7 @@ namespace GBot
                 do
                 {
                     string selector = baseClass.Selector.Replace("{index}", i.ToString());
-                    logger.Trace("Trying to fetch '{0}'", selector);
+                    // logger.Trace("Trying to fetch '{0}'", selector);
                     try
                     {
                         item = Fill<T>(selector);
@@ -200,7 +200,7 @@ namespace GBot
             bool isXpath = baseClass is FromXPath;
             int i = 1;
             bool found = false;
-            logger.Trace("Received {0}", Item);
+            // logger.Trace("Received {0}", Item);
             while (Times >= 0)
             {
                 do

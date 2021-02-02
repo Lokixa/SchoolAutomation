@@ -47,23 +47,30 @@ namespace Full
         }
         public async Task GetMessageLoop()
         {
-            Message last = null;
-            while (true)
+            try
             {
-                if (token.IsCancellationRequested)
+                Message last = null;
+                while (true)
                 {
-                    logger.Debug("Succesfully canceled");
-                    break;
+                    if (token.IsCancellationRequested)
+                    {
+                        logger.Debug("Succesfully canceled");
+                        break;
+                    }
+                    Message latest = crBot.GetMessage(0);
+                    if ((Message)latest != last)
+                    {
+                        logger.Debug("Received message from {0}", latest.Teacher);
+                        logger.Trace(latest);
+                        OnMessageReceived?.Invoke(crBot, new DataEventArgs<Message>(latest, last));
+                        last = latest;
+                    }
+                    await Task.Delay(new TimeSpan(0, minutes: 3, 0), token);
                 }
-                Message latest = crBot.GetMessage(0);
-                if ((Message)latest != last)
-                {
-                    logger.Debug("Received message from {0}", latest.Teacher);
-                    logger.Trace(latest);
-                    OnMessageReceived?.Invoke(crBot, new DataEventArgs<Message>(latest, last));
-                    last = latest;
-                }
-                await Task.Delay(new TimeSpan(0, minutes: 3, 0), token);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
             }
         }
         private void Login()
@@ -83,18 +90,21 @@ namespace Full
             if (latest.Information.ContainsGreeting()
                 || latest.Information.HasMeetLink())
             {
-                if (!(Utils.IsLangClass(latest) && Utils.IsLangClass(previous)))
+                // if both are not language class
+                if (!(Utils.IsLanguageClass(latest)
+                      && Utils.IsLanguageClass(previous)))
                 {
-                    logger.Trace("Greeting on message {0}", latest);
+                    logger.Debug("Trying to greet", latest);
                     latest = LangGroupFilter(bot, latest);
                     if (latest == null)
-                        logger.Error("Can't find language group's teacher's message");
+                        logger.Error("Latest message is null");
 
                     if (!bot.WrittenCommentOn(latest))
                     {
                         logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
                         bot.SendOnMessage(eventArgs.Data, "Добър ден.");
                     }
+                    else logger.Debug("There's a comment on it");
 
                     OnGreetingReceived?.Invoke(bot, eventArgs);
                 }
