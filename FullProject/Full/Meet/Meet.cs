@@ -138,7 +138,7 @@ namespace Full
             //TODO REPLACE CONSTANTS
             if (languageClass)
             {
-                peopleNeeded = 4;
+                peopleNeeded = 5;
             }
             else
             {

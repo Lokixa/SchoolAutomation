@@ -83,8 +83,9 @@ namespace Full
             if (latest.Information.ContainsGreeting()
                 || latest.Information.HasMeetLink())
             {
-                if (!Utils.IsLangClass(latest) && !Utils.IsLangClass(previous))
+                if (!(Utils.IsLangClass(latest) && Utils.IsLangClass(previous)))
                 {
+                    logger.Trace("Greeting on message {0}", latest);
                     latest = LangGroupFilter(bot, latest);
                     if (latest == null)
                         logger.Error("Can't find language group's teacher's message");

@@ -49,12 +49,17 @@ namespace Full
             var config = new NLog.Config.LoggingConfiguration();
 
             var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
-            logconsole.Layout = new NLog.Layouts.SimpleLayout(
+            var layout = new NLog.Layouts.SimpleLayout(
                 "[${date:format=HH\\:mm\\:ss}][${level}]${logger:shortName=true}: ${message}"
             );
+            logconsole.Layout = layout;
             logconsole.Encoding = System.Text.Encoding.UTF8;
+            var logfile = new NLog.Targets.FileTarget("logfile");
+            logfile.Layout = layout;
+            logfile.Encoding = logconsole.Encoding;
 
-            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logconsole, "*", final: true);
+            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logconsole, "*", final: true);
+            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logfile, "*", final: true);
 
             NLog.LogManager.Configuration = config;
             logger = NLog.LogManager.GetCurrentClassLogger();
