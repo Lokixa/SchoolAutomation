@@ -33,7 +33,7 @@ namespace MeetGBot
         public MeetBot(Config config) : base(FixConfig(config))
         {
             selectors = new MeetSelectorFactory().Get(config.Driver.Browser);
-            ChangeState(MeetState.NotLoggedIn);
+            State = MeetState.NotLoggedIn;
         }
 
         public bool Login()
@@ -97,9 +97,14 @@ namespace MeetGBot
             IWebElement el = firstLoad.Until(driver =>
                 driver.FindElement(selectors[Elements.MeetChatButton])
             );
+            firstLoad.Until(driver => el.Enabled && el.Displayed);
 
             Regex reg = new Regex("[0-9]*");
             Match match = reg.Match(el.Text);
+            if (!match.Success || string.IsNullOrEmpty(match.Value))
+            {
+                throw new InvalidSelectorException("Couldn't parse chat button: " + match.Value);
+            }
 
             return int.Parse(match.Value);
         }
@@ -142,11 +147,19 @@ namespace MeetGBot
             {
                 throw new InvalidOperationException("Not in meet overview");
             }
-            IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
-            firstLoad.Until(driver => joinButton.Displayed);
-            string text = joinButton.Text.Trim();
-            // logger.Debug("Join button text: '{0}'", text);
-            return !(text.Contains("Ask") || text.Contains("Молба"));
+            try
+            {
+                IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
+                firstLoad.Until(driver => joinButton.Displayed);
+                string text = joinButton.Text.Trim();
+                // logger.Debug("Join button text: '{0}'", text);
+                return !(text.Contains("Ask") || text.Contains("Молба"));
+            }
+            catch (StaleElementReferenceException)
+            {
+                logger.Debug("Caught stale reference exception for joinButton");
+                return false;
+            }
         }
 
         public void LeaveMeet()

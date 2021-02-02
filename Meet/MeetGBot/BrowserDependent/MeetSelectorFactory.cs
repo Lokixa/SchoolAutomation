@@ -15,7 +15,7 @@ namespace MeetGBot
 
             string meetCommon = "/html/body/div[1]/c-wiz/div[1]/div/div[8]/div[3]";
             selectors.Add(Elements.MeetChatButton,
-                By.XPath($"{meetCommon}/div[1]/div[3]/div/div[2]/div[1]"));
+                By.XPath($"{meetCommon}/div[1]/div[3]/div/div[2]/div[1]/span/span/div/div/span[2]"));
 
             selectors.Add(Elements.MeetHangupButton,
                 By.XPath($"{meetCommon}/div[9]/div[2]/div[2]/div"));
@@ -45,7 +45,7 @@ namespace MeetGBot
             string meetCommon = "/html/body/div[1]/c-wiz/div[1]/div/div[8]/div[3]";
 
             selectors.Add(Elements.MeetChatButton,
-                By.XPath($"{meetCommon}/div[1]/div[3]/div/div[2]/div[1]"));
+                By.XPath($"{meetCommon}/div[1]/div[3]/div/div[2]/div[1]/span/span/div/div/span[2]"));
 
             selectors.Add(Elements.MeetHangupButton,
                 By.XPath($"{meetCommon}/div[9]/div[2]/div[2]/div"));

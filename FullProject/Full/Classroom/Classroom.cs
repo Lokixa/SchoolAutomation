@@ -68,6 +68,10 @@ namespace Full
                     await Task.Delay(new TimeSpan(0, minutes: 3, 0), token);
                 }
             }
+            catch (TaskCanceledException)
+            {
+                logger.Debug("Successfully canceled");
+            }
             catch (Exception ex)
             {
                 logger.Error(ex);

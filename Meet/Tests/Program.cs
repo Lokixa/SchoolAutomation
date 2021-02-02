@@ -9,12 +9,12 @@ namespace Automation
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            await MeetTest();
+            MeetTest();
         }
 
-        private static async Task MeetTest()
+        private static void MeetTest()
         {
             if (!File.Exists("config.json"))
             {
@@ -39,7 +39,7 @@ namespace Automation
                 bot.EnterMeetOverview("https://meet.google.com/rje-zpyi-jcg");
                 Console.WriteLine(bot.PeopleInMeetOverview());
                 bot.EnterMeet();
-                await WaitFor(5);
+                Console.WriteLine(bot.PeopleInMeet());
                 bot.LeaveMeet();
 
                 // await WaitFor(10);

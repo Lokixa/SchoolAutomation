@@ -18,8 +18,8 @@ namespace Tests
                 NemskaGrupa = false,
                 Link = "https://classroom.google.com/u/1/c/MjEwMzIwNDY5MjYz",
             };
-            config.Driver.Browser = "chrome";
-            config.Driver.DriverFolder = "..\\..\\drivers";
+            config.Driver.Browser = "firefox";
+            config.Driver.DriverFolder = "/home/lyubenk/.webdrivers/";
             CancellationTokenSource source = new();
 
             using (Classroom cr = new Classroom(config, source.Token))
