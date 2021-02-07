@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Full\Full.csproj" />
-    <ProjectReference Include="..\..\GBot\GBot.csproj" />
     <ProjectReference Include="..\..\Classroom\GCRBot\GCRBot.csproj" />
   </ItemGroup>
 

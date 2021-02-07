@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-	  <ProjectReference Include="..\..\GBot\GBot.csproj" />
+	  <ProjectReference Include="..\..\Base\GBot\GBot.csproj" />
   </ItemGroup>
 
   <ItemGroup>

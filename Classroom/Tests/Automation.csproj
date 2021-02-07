@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GCRBot\GCRBot.csproj" />
-    <ProjectReference Include="..\..\GBot\GBot.csproj" />
   </ItemGroup>
 
   <ItemGroup>

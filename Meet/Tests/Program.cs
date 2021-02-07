@@ -40,9 +40,9 @@ namespace Automation
                 Console.WriteLine(bot.PeopleInMeetOverview());
                 bot.EnterMeet();
                 Console.WriteLine(bot.PeopleInMeet());
+                WaitFor(3).Wait();
                 bot.LeaveMeet();
 
-                // await WaitFor(10);
 
                 // bot.EnterMeetOverview("https://meet.google.com/ewd-kemi-rny");
                 // Console.WriteLine(bot.PeopleInMeetOverview());

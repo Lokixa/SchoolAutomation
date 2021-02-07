@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MeetGBot\MeetGBot.csproj" />
-    <ProjectReference Include="..\..\GBot\GBot.csproj" />
   </ItemGroup>
 
   <ItemGroup>

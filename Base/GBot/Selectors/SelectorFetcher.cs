@@ -11,7 +11,7 @@ namespace GBot
     {
         private readonly IWebDriver driver;
         private readonly WebDriverWait wait;
-        private WebDriverWait firstWait;
+        // private WebDriverWait firstWait;
         private NLog.Logger logger;
         private HashSet<Type> TypesToTraverse;
         const int POST_DEPTH = 30;
@@ -20,7 +20,7 @@ namespace GBot
         {
             this.driver = Driver;
             wait = new WebDriverWait(Driver, new TimeSpan(0, 0, 0, 0, 500));
-            firstWait = new WebDriverWait(Driver, new TimeSpan(0, 0, 4));
+            // firstWait = new WebDriverWait(Driver, new TimeSpan(0, 0, 4));
             logger = NLog.LogManager.GetCurrentClassLogger();
             TypesToTraverse = new();
         }
@@ -116,7 +116,7 @@ namespace GBot
 
         private IWebElement Fetch(string Selector, bool IsXpath)
         {
-            WebDriverWait waiter = firstWait ?? wait;
+            WebDriverWait waiter = wait;
             // logger.Trace("Fetching {0} with {1} timeout", Selector, waiter.Timeout);
             By by;
             if (IsXpath)
@@ -131,7 +131,6 @@ namespace GBot
                driver.FindElement(by)
             );
             waiter.Until(driver => el.Displayed);
-            if (firstWait != null) firstWait = null;
             return el;
         }
 

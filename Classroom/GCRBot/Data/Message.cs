@@ -3,7 +3,7 @@ using OpenQA.Selenium;
 
 namespace GCRBot.Data
 {
-    [FromXPath("/html/body/div[2]/div/div[2]/main/section/div/div[2]/div[{index}]")]
+    [FromXPath("/html/body/div[2]/div/div/div[2]/main/section/div/div[2]/div[{index}]")]
     public record Message
     {
         [FromXPath("/div[1]/div[1]/div[1]/div/div/span")]

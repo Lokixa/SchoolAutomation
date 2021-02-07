@@ -6,7 +6,7 @@ using OpenQA.Selenium;
 
 namespace GCRBot
 {
-    internal static class MeetSelectorFactory
+    internal static class ClassroomSelectorFactory
     {
         private static Dictionary<string, By> ForFirefox()
         {
@@ -22,13 +22,13 @@ namespace GCRBot
             selectors.Add(Elements.RelativeMessageComments,
                 By.XPath(".//div[2]/div/div[2]"));
             selectors.Add(Elements.ClassroomMeetLink,
-                By.XPath("/html/body/div[2]/div/div[1]/div/div[2]/div[2]/div/span/a"));
+                By.XPath("/html/body/div[2]/div/div/div[1]/div/div[2]/div[2]/div/span/a"));
             return selectors;
         }
         private static Dictionary<string, By> ForChrome()
         {
             Dictionary<string, By> chrome = ForFirefox();
-            chrome[Elements.ClassroomMeetLink] = By.XPath("/html/body/div[2]/div/div[1]/div/div[2]/div[2]/div/span/a");
+            // chrome[Elements.ClassroomMeetLink] = By.XPath("/html/body/div[2]/div/div/div[1]/div/div[2]/div[2]/div/span/a");
             return chrome;
         }
         public static ReadOnlyDictionary<string, By> Get(string browser)

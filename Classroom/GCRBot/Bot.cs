@@ -21,7 +21,7 @@ namespace GCRBot
         public ClassroomBot(Config config) : base(config)
         {
             selFetcher = new SelectorFetcher(driver);
-            selectors = MeetSelectorFactory.Get(config.Driver.Browser);
+            selectors = ClassroomSelectorFactory.Get(config.Driver.Browser);
         }
         public bool Login()
         {
@@ -57,8 +57,8 @@ namespace GCRBot
             try
             {
                 IWebElement link = firstLoad.Until(driver =>
-                    driver.FindElement(selectors[Elements.ClassroomMeetLink])
-                );
+                    driver.FindElement(selectors[Elements.ClassroomMeetLink]));
+                firstLoad.Until(driver => link.Enabled);
                 return link.Text;
             }
             catch (WebDriverTimeoutException)
