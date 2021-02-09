@@ -205,6 +205,7 @@ namespace MeetGBot
         }
         private void ChangeState(MeetState state)
         {
+            if (state == State) return;
             logger.Debug("Changing state {0} => {1}", State, state);
             State = state;
         }

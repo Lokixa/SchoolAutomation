@@ -57,7 +57,7 @@ namespace GCRBot
                 IWebElement comments = defaultWait.Until(driver =>
                     message.WebElement.FindElement(selectors[Elements.RelativeMessageComments])
                 );
-                IWebElement settings = comments.FindElement(By.XPath(".//div/div/div/div/div[1]/div[2]/div/div/div"));
+                IWebElement settings = comments.FindElement(By.XPath(".//div[last()]/div/div/div/div[1]/div[2]/div[1]"));
                 string label = settings.GetAttribute("aria-label");
                 return IsOwnComment(label);
             }

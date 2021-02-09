@@ -48,18 +48,24 @@ namespace Full
         {
             var config = new NLog.Config.LoggingConfiguration();
 
-            var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
+            var logconsole = new NLog.Targets.ColoredConsoleTarget("logconsole");
             var layout = new NLog.Layouts.SimpleLayout(
                 "[${date:format=HH\\:mm\\:ss}][${level}]${logger:shortName=true}: ${message}"
             );
             logconsole.Layout = layout;
             logconsole.Encoding = System.Text.Encoding.UTF8;
             var logfile = new NLog.Targets.FileTarget("logfile");
+            logfile.FileName = "./logs/log.txt";
+            logfile.ArchiveFileName = "log.{#}.txt";
+            logfile.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
+            logfile.ArchiveDateFormat = "dd-MM-yyyy";
+            logfile.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
+            logfile.CreateDirs = true;
             logfile.Layout = layout;
-            logfile.Encoding = logconsole.Encoding;
+            logfile.Encoding = System.Text.Encoding.UTF8;
 
-            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logconsole, "*");
-            // config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logfile, "*");
+            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logconsole, "*");
+            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logfile, "*");
 
             NLog.LogManager.Configuration = config;
             logger = NLog.LogManager.GetCurrentClassLogger();
