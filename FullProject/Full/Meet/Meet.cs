@@ -157,7 +157,7 @@ namespace Full
             //TODO REPLACE CONSTANTS
             if (languageClass)
             {
-                peopleNeeded = 4;
+                peopleNeeded = 5;
             }
             else
             {
@@ -191,7 +191,17 @@ namespace Full
                 // Most likely
                 if (link.Contains("/lookup/"))
                 {
-                    logger.Debug("No meet in lookup link");
+                    logger.Debug("No meet in lookup link (timeout)");
+                    return false;
+                }
+
+                throw;
+            }
+            catch (OpenQA.Selenium.StaleElementReferenceException)
+            {
+                if (link.Contains("/lookup/"))
+                {
+                    logger.Debug("No meet in lookup link (stale element)");
                     return false;
                 }
 

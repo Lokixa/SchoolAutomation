@@ -83,10 +83,10 @@ namespace MeetGBot
             }
             else firstLoad.Until(driver => driver.Url == link);
 
-            ChangeState(MeetState.InOverview);
-
             MuteElement(Elements.MicrophoneButton);
             MuteElement(Elements.CameraButton);
+
+            ChangeState(MeetState.InOverview);
         }
         public int PeopleInMeet()
         {
