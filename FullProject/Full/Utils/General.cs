@@ -22,7 +22,9 @@ namespace Full
         }
         public static bool HasMeetLink(this string text)
         {
-            return text.Contains("https://meet.google.com");
+            Regex meetLinkReg = new Regex(@"https:\/\/meet.google.com\/([A-Za-z]{3}-?)([a-zA-Z]{4}-?)([A-Za-z]{3})");
+            Match match = meetLinkReg.Match(text);
+            return match.Success && !string.IsNullOrEmpty(match.Value);
         }
     }
     public static class Utils
@@ -49,15 +51,7 @@ namespace Full
             }
             return success;
         }
-        public static bool IsLanguageClass(Message msg)
-        {
-            if (msg == null)
-            {
-                return false;
-            }
-            return msg.Teacher.Contains("Чапанова") || msg.Teacher.Contains("Вихрогонова");
-        }
-        public static string GetMeetLink(string text)
+        public static string MeetLink(this string text)
         {
             Regex meetLinkReg = new Regex(@"https:\/\/meet.google.com\/([A-Za-z]{3}-?)([a-zA-Z]{4}-?)([A-Za-z]{3}-?)");
             Match match = meetLinkReg.Match(text);

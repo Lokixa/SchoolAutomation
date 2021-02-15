@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,22 +15,22 @@ namespace Full
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private readonly LangConfig config;
+        private readonly FullConfig config;
         private readonly MeetBot meetBot;
         private readonly CancellationToken token;
-        private readonly Stack<Message> messageStack;
-
         private readonly string DefaultMeetLink;
 
-        public Meet(LangConfig config, string defaultMeetLink)
+        private Message lastMessage;
+
+
+        public Meet(FullConfig config, string defaultMeetLink)
         {
             meetBot = new MeetBot(config);
             this.config = config;
             DefaultMeetLink = defaultMeetLink;
-            messageStack = new();
             Login();
         }
-        public Meet(LangConfig config,
+        public Meet(FullConfig config,
                     string defaultMeetLink,
                     CancellationToken token) : this(config, defaultMeetLink)
         {
@@ -43,10 +44,10 @@ namespace Full
 
         public void ReceiveStartMessage(object sender, DataEventArgs<Message> eventArgs)
         {
-            if (!messageStack.Contains(eventArgs.Data))
-                messageStack.Push(new MeetMessage(eventArgs.Data));
+            if (lastMessage != null)
+                lastMessage = eventArgs.Data;
             else
-                logger.Fatal("Repeating message");
+                logger.Fatal("Received new message while last one isn't done: {0}", eventArgs.Data);
         }
 
         private async Task MeetLoop()
@@ -62,16 +63,16 @@ namespace Full
                     }
                     string link = DefaultMeetLink;
 
-                    if (StartMessageReceived(out MeetMessage msg)
-                        && !string.IsNullOrWhiteSpace(msg.MeetLink))
+                    if (lastMessage != null
+                        && !string.IsNullOrWhiteSpace(lastMessage.MeetLink()))
                     {
-                        link = msg.MeetLink;
-                        logger.Debug("Got link from message '{0}'", link);
+                        link = lastMessage.MeetLink();
+                        logger.Debug("Got link: '{0}'", link);
                     }
 
                     if (MeetExists(link))
                     {
-                        bool langClass = msg?.IsLanguageClass ?? false;
+                        bool langClass = lastMessage != null ? IsLanguageClass(lastMessage) : false;
 
                         int peopleNeeded = GetPeopleNeeded(langClass);
 
@@ -86,12 +87,14 @@ namespace Full
                                 await Task.Delay(new TimeSpan(0, 0, seconds), token);
                                 peopleInOverview = meetBot.PeopleInMeetOverview();
                             }
-                            // Only if people needed is met
-                            // we enter meet
+
                             if (peopleInOverview >= peopleNeeded)
                             {
+                                // Pop
+                                lastMessage = null;
+
                                 logger.Info("Entering meet");
-                                logger.Debug(" with {0} people", peopleInOverview);
+                                logger.Debug("with {0} people", peopleInOverview);
                                 meetBot.EnterMeet();
 
                                 await WaitPeopleToLeave(minimumPeople: peopleNeeded);
@@ -116,15 +119,20 @@ namespace Full
             }
         }
 
-        private bool StartMessageReceived(out MeetMessage result)
+        private bool IsLanguageClass(Message lastMessage)
         {
-            if (messageStack.Count > 0)
+            if (lastMessage == null)
+                throw new ArgumentNullException(nameof(lastMessage));
+
+            if (config.SplitClass.Teachers.Contains(lastMessage.Teacher))
             {
-                // Can crash bot if normal message has been pushed
-                result = (MeetMessage)messageStack.Pop();
+                if (config.SplitClass.Teacher != lastMessage.Teacher)
+                {
+                    throw new ArgumentException("Received a wrong language class");
+                }
                 return true;
             }
-            result = null;
+
             return false;
         }
 
@@ -154,14 +162,13 @@ namespace Full
         private int GetPeopleNeeded(bool languageClass)
         {
             int peopleNeeded;
-            //TODO REPLACE CONSTANTS
             if (languageClass)
             {
-                peopleNeeded = 5;
+                peopleNeeded = config.SplitClass.MinimumPeopleToEnter;
             }
             else
             {
-                peopleNeeded = 12;
+                peopleNeeded = config.MinimumPeopleToEnter;
             }
 
             return peopleNeeded;

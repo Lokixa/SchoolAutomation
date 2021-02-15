@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GBot;
@@ -16,9 +17,9 @@ namespace Full
 
         private CancellationToken token;
         private ClassroomBot crBot;
-        private readonly LangConfig config;
+        private readonly FullConfig config;
 
-        public Classroom(LangConfig config)
+        public Classroom(FullConfig config)
         {
             config.Driver.Headless = true;
             crBot = new ClassroomBot(config);
@@ -26,7 +27,7 @@ namespace Full
             this.config = config;
             Login();
         }
-        public Classroom(LangConfig config, CancellationToken token) : this(config)
+        public Classroom(FullConfig config, CancellationToken token) : this(config)
         {
             this.token = token;
             token.Register(() => logger.Debug("Cancellation requested for classroom"));
@@ -89,61 +90,54 @@ namespace Full
         private void Greet(object sender, DataEventArgs<Message> eventArgs)
         {
             ClassroomBot bot = (ClassroomBot)sender;
-            Message latest = eventArgs.Data;
-            Message previous = eventArgs.PreviousData;
+            if (eventArgs.Data == null)
+            {
+                throw new NullReferenceException("Message is null on receive");
+            }
+
+            Message latest = LanguageClassTrim(eventArgs);
+            if (latest == null)
+            {
+                logger.Info("Received message but not in language group.");
+                logger.Info("Moving on...");
+                return;
+            }
+
             if (latest.Information.ContainsGreeting()
                 || latest.Information.HasMeetLink())
             {
-                // if both are not language class
-                if (!(Utils.IsLanguageClass(latest)
-                      && Utils.IsLanguageClass(previous)))
+                logger.Debug("Trying to greet", latest);
+
+                if (!bot.WrittenCommentOn(latest))
                 {
-                    logger.Debug("Trying to greet", latest);
-                    latest = LangGroupFilter(bot, latest);
-                    if (latest == null)
-                        logger.Error("Latest message is null");
-
-                    if (!bot.WrittenCommentOn(latest))
-                    {
-                        logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
-                        bot.SendOnMessage(eventArgs.Data, "Добър ден.");
-                    }
-                    else logger.Debug("There's a comment on it");
-
-                    OnGreetingReceived?.Invoke(bot, eventArgs);
+                    logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
+                    bot.SendOnMessage(eventArgs.Data, "Добър ден.");
                 }
+                else logger.Debug("There's a comment on it");
+
+                OnGreetingReceived?.Invoke(bot, eventArgs);
             }
         }
-        private Message LangGroupFilter(ClassroomBot bot, Message latest)
-        {
-            if (config.NemskaGrupa && latest.Teacher.Contains("Чапанова"))
-            {
-                Message msgAfter = bot.GetMessageAfter(latest);
-                if (msgAfter.Teacher.Contains("Вихрогонова"))
-                {
-                    logger.Trace("Nemska grupa found teacher");
-                    latest = msgAfter;
-                }
-                else
-                {
-                    latest = null;
-                }
-            }
-            else if (!config.NemskaGrupa && latest.Teacher.Contains("Вихрогонова"))
-            {
-                Message msgAfter = bot.GetMessageAfter(latest);
-                if (msgAfter.Teacher.Contains("Чапанова"))
-                {
-                    logger.Trace("Ruska grupa found teacher");
-                    latest = msgAfter;
-                }
-                else
-                {
-                    latest = null;
-                }
-            }
 
-            return latest;
+        private Message LanguageClassTrim(DataEventArgs<Message> eventArgs)
+        {
+            string[] teachers = config.SplitClass.Teachers;
+            if (teachers.Contains(eventArgs.Data.Teacher))
+            {
+                if (config.SplitClass.Teacher == eventArgs.Data.Teacher)
+                {
+                    return eventArgs.Data;
+                }
+                else if (teachers.Contains(eventArgs.PreviousData.Teacher))
+                {
+                    if (config.SplitClass.Teacher == eventArgs.PreviousData.Teacher)
+                    {
+                        return eventArgs.PreviousData;
+                    }
+                }
+                else return null;
+            }
+            return eventArgs.Data;
         }
 
         public void Dispose()

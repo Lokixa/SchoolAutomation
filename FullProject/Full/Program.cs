@@ -12,9 +12,10 @@ namespace Full
         static void Main(string[] args)
         {
             SetupLogger();
-            CancellationTokenSource source = new();
-            LangConfig config = GetConfig();
+            FullConfig config = GetConfig();
             if (config == null) return;
+
+            CancellationTokenSource source = new();
 
             Classroom classroom = new Classroom(config, source.Token);
             Meet meet = null;
@@ -71,15 +72,15 @@ namespace Full
             logger = NLog.LogManager.GetCurrentClassLogger();
         }
 
-        private static LangConfig GetConfig()
+        private static FullConfig GetConfig()
         {
             if (!System.IO.File.Exists("config.json"))
             {
-                GCRBot.ClassroomBot.CreateEmpty<LangConfig>();
+                GCRBot.ClassroomBot.CreateEmpty<FullConfig>();
                 logger.Info("Created empty config file");
                 return null;
             }
-            return JsonConvert.DeserializeObject<LangConfig>(System.IO.File.ReadAllText("config.json"));
+            return JsonConvert.DeserializeObject<FullConfig>(System.IO.File.ReadAllText("config.json"));
         }
     }
 }
