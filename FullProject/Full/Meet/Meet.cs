@@ -18,21 +18,19 @@ namespace Full
         private readonly FullConfig config;
         private readonly MeetBot meetBot;
         private readonly CancellationToken token;
-        private readonly string DefaultMeetLink;
 
+        private string DefaultMeetLink;
         private Message lastMessage;
 
 
-        public Meet(FullConfig config, string defaultMeetLink)
+        public Meet(FullConfig config)
         {
             meetBot = new MeetBot(config);
             this.config = config;
-            DefaultMeetLink = defaultMeetLink;
             Login();
         }
         public Meet(FullConfig config,
-                    string defaultMeetLink,
-                    CancellationToken token) : this(config, defaultMeetLink)
+                    CancellationToken token) : this(config)
         {
             this.token = token;
         }
@@ -44,10 +42,26 @@ namespace Full
 
         public void ReceiveStartMessage(object sender, DataEventArgs<Message> eventArgs)
         {
-            if (lastMessage != null)
+            if (lastMessage == null)
+            {
                 lastMessage = eventArgs.Data;
+            }
             else
-                logger.Fatal("Received new message while last one isn't done: {0}", eventArgs.Data);
+            {
+                logger.Fatal("Received new message while last one isn't done");
+                logger.Debug("Last message: {0}", lastMessage);
+                logger.Debug("New message: {0}", eventArgs.Data);
+            }
+            var bot = (ClassroomBot)sender;
+            UpdateDefaultMeetLink(bot.GetClassroomMeetLink());
+        }
+        private void UpdateDefaultMeetLink(string link)
+        {
+            if (link != DefaultMeetLink)
+            {
+                DefaultMeetLink = link;
+                logger.Debug("New meet link");
+            }
         }
 
         private async Task MeetLoop()

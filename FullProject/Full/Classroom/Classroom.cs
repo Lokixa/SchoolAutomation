@@ -34,9 +34,7 @@ namespace Full
         }
         public Meet InitMeetInstance(CancellationToken token)
         {
-            string meetLink = crBot.GetClassroomMeetLink();
-
-            Meet meet = new Meet(config, meetLink, token);
+            Meet meet = new Meet(config, token);
 
             OnGreetingReceived += meet.ReceiveStartMessage;
             return meet;
