@@ -8,7 +8,7 @@ namespace Full
     public class SplitClass
     {
         public string Teacher { get; init; } = string.Empty;
-        public string[] Teachers { get; init; } = new string[] { };
+        public string[] ReplacesTeachers { get; init; } = new string[] { };
         public int MinimumPeopleToEnter { get; init; } = 5;
     }
 }

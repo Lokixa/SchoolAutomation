@@ -7,18 +7,18 @@ namespace Full
 {
     class Program
     {
-        static NLog.Logger logger;
+        static NLog.Logger? logger;
 
         static void Main(string[] args)
         {
             SetupLogger();
-            FullConfig config = GetConfig();
+            FullConfig? config = GetConfig();
             if (config == null) return;
 
             CancellationTokenSource source = new();
 
             Classroom classroom = new Classroom(config, source.Token);
-            Meet meet = null;
+            Meet? meet = null;
             try
             {
                 meet = classroom.InitMeetInstance(source.Token);
@@ -31,12 +31,12 @@ namespace Full
             catch (AggregateException ex)
             {
                 if (ex.InnerException is TaskCanceledException)
-                    logger.Info("Successfully canceled");
-                else logger.Error(ex);
+                    logger?.Info("Successfully canceled");
+                else logger?.Error(ex);
             }
             catch (Exception ex)
             {
-                logger.Error(ex);
+                logger?.Error(ex);
             }
             finally
             {
@@ -72,12 +72,12 @@ namespace Full
             logger = NLog.LogManager.GetCurrentClassLogger();
         }
 
-        private static FullConfig GetConfig()
+        private static FullConfig? GetConfig()
         {
             if (!System.IO.File.Exists("config.json"))
             {
                 GCRBot.ClassroomBot.CreateEmpty<FullConfig>();
-                logger.Info("Created empty config file");
+                logger?.Info("Created empty config file");
                 return null;
             }
             return JsonConvert.DeserializeObject<FullConfig>(System.IO.File.ReadAllText("config.json"));

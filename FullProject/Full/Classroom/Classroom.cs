@@ -10,12 +10,12 @@ namespace Full
 {
     public class Classroom : IDisposable
     {
-        public event EventHandler<DataEventArgs<Message>> OnMessageReceived;
-        public event EventHandler<DataEventArgs<Message>> OnGreetingReceived;
+        public event EventHandler<DataEventArgs<Message>>? OnMessageReceived;
+        public event EventHandler<DataEventArgs<Message>>? OnGreetingReceived;
 
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private CancellationToken token;
+        private CancellationToken? token;
         private ClassroomBot crBot;
         private readonly FullConfig config;
 
@@ -48,10 +48,10 @@ namespace Full
         {
             try
             {
-                Message last = null;
+                Message? last = null;
                 while (true)
                 {
-                    if (token.IsCancellationRequested)
+                    if (token?.IsCancellationRequested ?? false)
                     {
                         logger.Debug("Succesfully canceled");
                         break;
@@ -64,7 +64,10 @@ namespace Full
                         OnMessageReceived?.Invoke(crBot, new DataEventArgs<Message>(latest, last));
                         last = latest;
                     }
-                    await Task.Delay(new TimeSpan(0, minutes: 3, 0), token);
+                    if (token == null)
+                        await Task.Delay(new TimeSpan(0, minutes: 3, 0));
+                    else
+                        await Task.Delay(new TimeSpan(0, minutes: 3, 0), (CancellationToken)token);
                 }
             }
             catch (TaskCanceledException)
@@ -85,57 +88,39 @@ namespace Full
             }
             logger.Debug("Logged in.");
         }
-        private void Greet(object sender, DataEventArgs<Message> eventArgs)
+        private void Greet(object? sender, DataEventArgs<Message> eventArgs)
         {
-            ClassroomBot bot = (ClassroomBot)sender;
+            ClassroomBot? bot = sender as ClassroomBot;
+            if (bot == null) throw new NullReferenceException();
             if (eventArgs.Data == null)
             {
                 throw new NullReferenceException("Message is null on receive");
             }
 
-            Message latest = LanguageClassTrim(eventArgs);
-            if (latest == null)
-            {
-                logger.Info("Received message but not in language group.");
-                logger.Info("Moving on...");
-                return;
-            }
+            Message latest = eventArgs.Data;
 
             if (latest.Information.ContainsGreeting()
                 || latest.Information.HasMeetLink())
             {
-                logger.Debug("Trying to greet", latest);
-
-                if (!bot.WrittenCommentOn(latest))
+                if (config.SplitClass.ReplacesTeachers.Contains(latest.Teacher))
                 {
-                    logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
-                    bot.SendOnMessage(eventArgs.Data, "Добър ден.");
+                    logger.Debug("Received greeting from different group teacher: {0}",
+                                 latest.Teacher);
                 }
-                else logger.Debug("There's a comment on it");
+                else
+                {
+                    logger.Debug("Trying to greet");
+
+                    if (!bot.WrittenCommentOn(latest))
+                    {
+                        logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
+                        bot.SendOnMessage(eventArgs.Data, "Добър ден.");
+                    }
+                    else logger.Debug("There's a comment on it");
+                }
 
                 OnGreetingReceived?.Invoke(bot, eventArgs);
             }
-        }
-
-        private Message LanguageClassTrim(DataEventArgs<Message> eventArgs)
-        {
-            string[] teachers = config.SplitClass.Teachers;
-            if (teachers.Contains(eventArgs.Data.Teacher))
-            {
-                if (config.SplitClass.Teacher == eventArgs.Data.Teacher)
-                {
-                    return eventArgs.Data;
-                }
-                else if (teachers.Contains(eventArgs.PreviousData.Teacher))
-                {
-                    if (config.SplitClass.Teacher == eventArgs.PreviousData.Teacher)
-                    {
-                        return eventArgs.PreviousData;
-                    }
-                }
-                else return null;
-            }
-            return eventArgs.Data;
         }
 
         public void Dispose()

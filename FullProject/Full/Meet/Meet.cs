@@ -11,6 +11,7 @@ using MeetGBot;
 
 namespace Full
 {
+#nullable enable
     public class Meet : IDisposable
     {
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -19,8 +20,8 @@ namespace Full
         private readonly MeetBot meetBot;
         private readonly CancellationToken token;
 
-        private string DefaultMeetLink;
-        private Message lastMessage;
+        private string? DefaultMeetLink;
+        private Message? lastMessage;
 
 
         public Meet(FullConfig config)
@@ -40,19 +41,19 @@ namespace Full
             await MeetLoop();
         }
 
-        public void ReceiveStartMessage(object sender, DataEventArgs<Message> eventArgs)
+        public void ReceiveStartMessage(object? sender, DataEventArgs<Message> eventArgs)
         {
-            if (lastMessage == null)
+            if (lastMessage != null
+                && !config.SplitClass.ReplacesTeachers.Contains(lastMessage.Teacher))
             {
-                lastMessage = eventArgs.Data;
-            }
-            else
-            {
-                logger.Fatal("Received new message while last one isn't done");
+                logger.Warn("Received new message while last one isn't done");
                 logger.Debug("Last message: {0}", lastMessage);
                 logger.Debug("New message: {0}", eventArgs.Data);
+                logger.Debug("Changing to new message.");
             }
-            var bot = (ClassroomBot)sender;
+            lastMessage = eventArgs.Data;
+            var bot = sender as ClassroomBot;
+            if (bot == null) throw new NullReferenceException("Null classroom bot");
             UpdateDefaultMeetLink(bot.GetClassroomMeetLink());
         }
         private void UpdateDefaultMeetLink(string link)
@@ -75,50 +76,22 @@ namespace Full
                         logger.Debug("Succesfully canceled");
                         break;
                     }
-                    string link = DefaultMeetLink;
-
-                    if (lastMessage != null
-                        && !string.IsNullOrWhiteSpace(lastMessage.MeetLink()))
+                    string? link = GetLink(lastMessage);
+                    // No entry until right message
+                    while (link == null && lastMessage != null)
                     {
-                        link = lastMessage.MeetLink();
-                        logger.Debug("Got link: '{0}'", link);
+                        string teacher = lastMessage.Teacher;
+
+                        // Wait for lastMessage update
+                        while (teacher == lastMessage.Teacher)
+                            await Task.Delay(new TimeSpan(0, 0, 5), token);
+
+                        link = GetLink(lastMessage);
                     }
 
-                    if (MeetExists(link))
-                    {
-                        bool langClass = lastMessage != null ? IsLanguageClass(lastMessage) : false;
+                    if (link == null) throw new NullReferenceException("Link is null");
 
-                        int peopleNeeded = GetPeopleNeeded(langClass);
-
-                        if (meetBot.CanJoin())
-                        {
-                            int peopleInOverview = meetBot.PeopleInMeetOverview();
-
-                            int seconds = 3;
-                            // Wait two minutes
-                            for (int i = 0; i < (60 * 2 / seconds) && peopleInOverview < peopleNeeded; i++)
-                            {
-                                await Task.Delay(new TimeSpan(0, 0, seconds), token);
-                                peopleInOverview = meetBot.PeopleInMeetOverview();
-                            }
-
-                            if (peopleInOverview >= peopleNeeded)
-                            {
-                                // Pop
-                                lastMessage = null;
-
-                                logger.Info("Entering meet");
-                                logger.Debug("with {0} people", peopleInOverview);
-                                meetBot.EnterMeet();
-
-                                await WaitPeopleToLeave(minimumPeople: peopleNeeded);
-
-                                logger.Info("Leaving meet");
-                                meetBot.LeaveMeet();
-                            }
-                            logger.Debug("Back to meet loop");
-                        }
-                    }
+                    await TryEnterMeet(link);
 
                     await Task.Delay(new TimeSpan(0, 0, seconds: 30), token);
                 }
@@ -133,12 +106,73 @@ namespace Full
             }
         }
 
+        private string? GetLink(Message? message)
+        {
+            if (message != null)
+            {
+                if (message.Teacher == config.SplitClass.Teacher)
+                {
+                    string? msgLink = message.MeetLink();
+
+                    if (msgLink != null)
+                    {
+                        return msgLink;
+                    }
+                }
+                else if (config.SplitClass.ReplacesTeachers.Contains(message.Teacher))
+                {
+                    return null;
+                }
+            }
+
+            return DefaultMeetLink;
+        }
+
+        private async Task TryEnterMeet(string link)
+        {
+            if (MeetExists(link))
+            {
+                bool langClass = lastMessage != null ? IsLanguageClass(lastMessage) : false;
+
+                int peopleNeeded = GetPeopleNeeded(langClass);
+
+                if (meetBot.CanJoin())
+                {
+                    int peopleInOverview = meetBot.PeopleInMeetOverview();
+
+                    int seconds = 3;
+                    // Wait two minutes
+                    for (int i = 0; i < (60 * 2 / seconds) && peopleInOverview < peopleNeeded; i++)
+                    {
+                        await Task.Delay(new TimeSpan(0, 0, seconds), token);
+                        peopleInOverview = meetBot.PeopleInMeetOverview();
+                    }
+
+                    if (peopleInOverview >= peopleNeeded)
+                    {
+                        // Pop
+                        lastMessage = null;
+
+                        logger.Info("Entering meet");
+                        logger.Debug("with {0} people", peopleInOverview);
+                        meetBot.EnterMeet();
+
+                        await WaitPeopleToLeave(minimumPeople: peopleNeeded);
+
+                        logger.Info("Leaving meet");
+                        meetBot.LeaveMeet();
+                    }
+                    logger.Debug("Back to meet loop");
+                }
+            }
+        }
+
         private bool IsLanguageClass(Message lastMessage)
         {
             if (lastMessage == null)
                 throw new ArgumentNullException(nameof(lastMessage));
 
-            if (config.SplitClass.Teachers.Contains(lastMessage.Teacher))
+            if (config.SplitClass.ReplacesTeachers.Contains(lastMessage.Teacher))
             {
                 if (config.SplitClass.Teacher != lastMessage.Teacher)
                 {
