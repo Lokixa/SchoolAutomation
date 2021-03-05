@@ -18,8 +18,7 @@ namespace Automation
             SetupLogger();
             Config config = GetConfig();
             if (config == null) return;
-            // config.Driver.Browser = "firefox";
-            // config.Driver.Headless = false;
+            config.Driver.Headless = false;
             using (ClassroomBot bot = new ClassroomBot(config))
             {
                 try
@@ -27,17 +26,17 @@ namespace Automation
                     logger.Info("Loggedin: " + bot.Login());
                     // Console.WriteLine("Press enter...");
                     // Console.ReadLine();
-                    logger.Info(bot.GetClassroomMeetLink());
-                    Post post = bot.GetPost(0);
-                    logger.Info(post);
-                    logger.Info(bot.GetPostAfter(post));
+                    // logger.Info(bot.GetClassroomMeetLink());
+                    // Post post = bot.GetPost(0);
+                    // logger.Info(post);
+                    // logger.Info(bot.GetPostAfter(post));
                     Message msg = bot.GetMessage(0);
                     logger.Info(msg);
                     logger.Info("Written comment? {0}", bot.WrittenCommentOn(msg));
                     msg = bot.GetMessage(1);
                     logger.Info(msg);
                     logger.Info("Written comment? {0}", bot.WrittenCommentOn(msg));
-                    logger.Info(bot.GetMessageAfter(msg).Teacher);
+                    // logger.Info(bot.GetMessageAfter(msg).Teacher);
                 }
                 catch (Exception ex)
                 {

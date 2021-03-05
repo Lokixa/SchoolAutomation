@@ -25,7 +25,7 @@ namespace GCRBot
         }
         public bool Login()
         {
-            string path = Path.Combine("./", Cookies.GetName(config.Driver.Browser));
+            string path = Path.Combine(config.Driver.CookieFolder, Cookies.GetName(config.Driver.Browser));
             logger.Debug("Cookie path: " + path);
             if (!File.Exists(path))
             {

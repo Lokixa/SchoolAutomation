@@ -18,7 +18,7 @@ namespace GCRBot
             selectors.Add(Elements.ShowMoreButton,
                 By.XPath("/html/body/nav/div[3]/div[2]/div/div/div/div"));
             selectors.Add(Elements.RelativeMessageCommentButton,
-                By.XPath(".//div[2]/div/div[1]"));
+                By.XPath(".//div[2]/div/div[1]/div/span/span[2]"));
             selectors.Add(Elements.RelativeMessageComments,
                 By.XPath(".//div[2]/div/div[2]"));
             selectors.Add(Elements.ClassroomMeetLink,

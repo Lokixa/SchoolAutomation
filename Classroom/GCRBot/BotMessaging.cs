@@ -97,19 +97,26 @@ namespace GCRBot
         }
         private int AmountOfComments(Message message)
         {
-            IWebElement comments = defaultWait.Until(driver =>
-                driver.FindElement(selectors[Elements.RelativeMessageComments])
-            );
             try
             {
-                IWebElement commentsButton = message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton]);
+                IWebElement commentsButton = firstLoad.Until(driver =>
+                    {
+                        IWebElement button = message.WebElement.FindElement(selectors[Elements.RelativeMessageCommentButton]);
+                        if (button?.Text == null) return null;
+                        return button;
+                    }
+                );
+                logger.Debug("Comments button: {0}", commentsButton.Text);
 
-                firstLoad.Until(driver => commentsButton.Enabled && commentsButton.Displayed);
+                //firstLoad.Until(driver => commentsButton.Displayed);
+
+                // logger.Debug("Comments button loaded: {0}", commentsButton.Text);
 
                 return GetNumbersFrom(commentsButton.Text);
             }
             catch (WebDriverTimeoutException)
             {
+                logger.Warn("Comment button timedout");
                 return 0;
             }
         }
