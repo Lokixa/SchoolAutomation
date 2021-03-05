@@ -189,7 +189,7 @@ namespace Full
             if (minimumPeople < 0) throw new ArgumentOutOfRangeException(nameof(minimumPeople));
             if (meetBot.State != MeetState.InCall) throw new Exception("Not in call");
 
-            await Task.Delay(new TimeSpan(0, minutes: 15, 0), token);
+            await Task.Delay(new TimeSpan(0, minutes: 5, 0), token);
             logger.Debug("Starting exit loop...");
 
             while (true)
