@@ -65,7 +65,9 @@ namespace MeetGBot
                 throw new InvalidOperationException("Not in meet overview");
             }
 
-            IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
+            IWebElement joinButton = firstLoad.Until(driver =>
+                driver.FindElement(selectors[Elements.JoinButton])
+            );
             firstLoad.Until(driver => joinButton.Displayed);
             logger.Debug("Joining meet");
             joinButton.Click();
