@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using GCRBot;
 using GCRBot.Data;
 
 namespace Full
@@ -19,6 +20,16 @@ namespace Full
                 }
             }
             return false;
+        }
+        public static bool Greet(this ClassroomBot bot, Message message)
+        {
+            if (!bot.WrittenCommentOn(message))
+            {
+                //TODO Replace with entry in config file someday
+                bot.SendOnMessage(message, "Добър ден.");
+                return true;
+            }
+            else return false;
         }
         public static bool HasMeetLink(this string text)
         {

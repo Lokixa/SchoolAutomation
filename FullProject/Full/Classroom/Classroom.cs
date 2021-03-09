@@ -23,7 +23,7 @@ namespace Full
         {
             config.Driver.Headless = true;
             crBot = new ClassroomBot(config);
-            OnMessageReceived += Greet;
+            OnMessageReceived += ToGreetCheck;
             this.config = config;
             Login();
         }
@@ -57,7 +57,7 @@ namespace Full
                         break;
                     }
                     Message latest = crBot.GetMessage(0);
-                    if ((Message)latest !=  last)
+                    if ((Message)latest != last)
                     {
                         logger.Debug("Received message from {0}", latest.Teacher);
                         logger.Trace(latest);
@@ -88,7 +88,7 @@ namespace Full
             }
             logger.Debug("Logged in.");
         }
-        private void Greet(object? sender, DataEventArgs<Message> eventArgs)
+        private void ToGreetCheck(object? sender, DataEventArgs<Message> eventArgs)
         {
             ClassroomBot? bot = sender as ClassroomBot;
             if (bot == null) throw new NullReferenceException();
@@ -99,6 +99,7 @@ namespace Full
 
             Message latest = eventArgs.Data;
 
+            logger.Debug("Trying to greet");
             if (latest.Information.ContainsGreeting()
                 || latest.Information.HasMeetLink())
             {
@@ -106,18 +107,21 @@ namespace Full
                 {
                     logger.Debug("Received greeting from different group teacher: {0}",
                                  latest.Teacher);
-                }
-                else
-                {
-                    logger.Debug("Trying to greet");
-
-                    if (!bot.WrittenCommentOn(latest))
+                    logger.Debug("Checking message after if missed...");
+                    Message nextMessage = bot.GetMessageAfter(latest);
+                    if (config.SplitClass.Teacher != nextMessage.Teacher)
                     {
-                        logger.Info("Saying hello to {0}", eventArgs.Data.Teacher);
-                        bot.SendOnMessage(eventArgs.Data, "Добър ден.");
+                        return;
                     }
-                    else logger.Debug("There's a comment on it");
+                    latest = nextMessage;
                 }
+
+                // Greet latest message
+                if (bot.Greet(latest))
+                {
+                    logger.Info("Said 'добър ден.' to {0}", latest.Teacher);
+                }
+                else logger.Debug("Already greeted {0}", latest.Teacher);
 
                 OnGreetingReceived?.Invoke(bot, eventArgs);
             }
