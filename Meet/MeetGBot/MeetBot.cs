@@ -157,9 +157,12 @@ namespace MeetGBot
                 // logger.Debug("Join button text: '{0}'", text);
                 return !(text.Contains("Ask") || text.Contains("Молба"));
             }
-            catch (StaleElementReferenceException)
+            catch (Exception ex)
             {
-                logger.Debug("Caught stale reference exception for joinButton");
+                if (ex is StaleElementReferenceException)
+                    logger.Debug("Caught stale reference exception for joinButton");
+                if (ex is NoSuchElementException)
+                    logger.Debug("Caught such element exception for joinButton");
                 return false;
             }
         }
