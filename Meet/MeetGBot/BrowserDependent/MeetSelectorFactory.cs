@@ -43,13 +43,8 @@ namespace MeetGBot
         public Dictionary<string, By> ForChrome()
         {
             Dictionary<string, By> selectors = ForFirefox();
-            // string meetCommon = "/html/body/div[1]/c-wiz/div[1]/div/div[9]/div[3]";
-
-            // selectors.Add(Elements.MeetChatButton,
-            //     By.XPath($"{meetCommon}/div[1]/div[3]/div/div[2]/div[1]/span/span/div/div/span[2]"));
-
-            // selectors.Add(Elements.MeetHangupButton,
-            //     By.XPath($"{meetCommon}/div[9]/div[2]/div[2]/div"));
+            // Elements.MeetChatButton,
+            // Elements.MeetHangupButton,
 
             const string common = "/html/body/div[1]/c-wiz/div[1]/div/div[9]/div[3]/div/div/div[2]/div/div[1]";
 

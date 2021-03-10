@@ -96,16 +96,17 @@ namespace MeetGBot
             {
                 throw new InvalidOperationException("Not in meet call");
             }
+            Regex reg = new Regex("[0-9]*");
+
             IWebElement el = firstLoad.Until(driver =>
                 driver.FindElement(selectors[Elements.MeetChatButton])
             );
             firstLoad.Until(driver => el.Enabled && el.Displayed);
 
-            Regex reg = new Regex("[0-9]*");
             Match match = reg.Match(el.Text);
             if (!match.Success || string.IsNullOrEmpty(match.Value))
             {
-                throw new InvalidSelectorException("Couldn't parse chat button: " + match.Value);
+                throw new OpenQA.Selenium.NoSuchElementException("Couldn't parse chat button: " + match.Value);
             }
 
             return int.Parse(match.Value);

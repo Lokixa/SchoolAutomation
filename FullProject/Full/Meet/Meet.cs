@@ -20,7 +20,8 @@ namespace Full
         private readonly MeetBot meetBot;
         private readonly CancellationToken token;
 
-        private string? DefaultMeetLink;
+        public string? MeetLookupLink { get; set; }
+        private string? ActiveMeetLink;
         private Message? lastMessage;
 
 
@@ -54,17 +55,13 @@ namespace Full
             lastMessage = eventArgs.Data;
             var bot = sender as ClassroomBot;
             if (bot == null) throw new NullReferenceException("Null classroom bot");
-            UpdateDefaultMeetLink(bot.GetClassroomMeetLink());
-        }
-        private void UpdateDefaultMeetLink(string link)
-        {
-            if (link != DefaultMeetLink)
+            string link = bot.GetClassroomMeetLink();
+            if (link != ActiveMeetLink)
             {
-                DefaultMeetLink = link;
+                ActiveMeetLink = link;
                 logger.Debug("New meet link");
             }
         }
-
         private async Task MeetLoop()
         {
             try
@@ -125,7 +122,7 @@ namespace Full
                 }
             }
 
-            return DefaultMeetLink;
+            return ActiveMeetLink ?? MeetLookupLink;
         }
 
         private async Task TryEnterMeet(string? link)
@@ -194,7 +191,18 @@ namespace Full
 
             while (true)
             {
-                int peopleInCall = meetBot.PeopleInMeet();
+                int peopleInCall = -1;
+                while (peopleInCall == -1)
+                {
+                    try
+                    {
+                        peopleInCall = meetBot.PeopleInMeet();
+                    }
+                    catch (OpenQA.Selenium.NoSuchElementException)
+                    {
+                        logger.Debug("Failed to fetch people in meet");
+                    }
+                }
 
                 if (peopleInCall < minimumPeople)
                 {
