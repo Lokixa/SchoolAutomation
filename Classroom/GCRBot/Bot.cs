@@ -34,6 +34,7 @@ namespace GCRBot
                 loginConf.Driver.Browser = config.Driver.Browser;
                 loginConf.Driver.Headless = false;
                 loginConf.Driver.DriverFolder = config.Driver.DriverFolder;
+                loginConf.Driver.CookieFolder = config.Driver.CookieFolder;
                 LoginBot loginBot = null;
                 try
                 {

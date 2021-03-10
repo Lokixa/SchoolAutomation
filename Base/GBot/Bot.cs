@@ -43,6 +43,7 @@ namespace GBot
             firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
 
             bool loadedCookies = LoadCookies(CookiesPath);
+            logger?.Debug("Loaded {0}: {1}", CookiesPath, loadedCookies);
 
             driver.Navigate().GoToUrl(LoginLink);
 
@@ -66,7 +67,8 @@ namespace GBot
                         driver.Navigate().GoToUrl(EduLink);
 
                         // Save edu.google.com cookies insted of classroom's
-                        if (firefox) firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
+                        /*if (firefox)*/
+                        firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
 
                         SaveCookies(driver.Manage().Cookies.AllCookies, CookiesPath);
                     }
@@ -100,7 +102,7 @@ namespace GBot
 
         protected void SaveCookies(ReadOnlyCollection<Cookie> cookies, string cookiePath)
         {
-            logger.Trace("Saving cookies to " + cookiePath);
+            logger.Debug("Saving cookies to " + cookiePath);
             File.WriteAllText(cookiePath, JsonConvert.SerializeObject(cookies));
         }
         protected bool LoadCookies(string cookiePath)
@@ -114,6 +116,7 @@ namespace GBot
                 cookies.AddCookie(Cookie.FromDictionary(dict));
                 addedCookies++;
             }
+            logger?.Debug("Loaded {0} cookies", addedCookies);
             return addedCookies > 0;
         }
 
