@@ -73,7 +73,7 @@ namespace Full
                 {
                     if (token.IsCancellationRequested)
                     {
-                        logger.Debug("Succesfully canceled");
+                        logger?.Debug("Succesfully canceled");
                         break;
                     }
                     string? link = GetLink(lastMessage);
@@ -89,7 +89,7 @@ namespace Full
                         link = GetLink(lastMessage);
                     }
 
-                    if (link == null) throw new NullReferenceException("Link is null");
+                    if (link == null) logger?.Debug("Link is null");
 
                     await TryEnterMeet(link);
 
@@ -128,7 +128,7 @@ namespace Full
             return DefaultMeetLink;
         }
 
-        private async Task TryEnterMeet(string link)
+        private async Task TryEnterMeet(string? link)
         {
             if (MeetExists(link))
             {
@@ -222,7 +222,7 @@ namespace Full
             return peopleNeeded;
         }
 
-        private bool MeetExists(string link)
+        private bool MeetExists(string? link)
         {
             if (string.IsNullOrEmpty(link))
             {

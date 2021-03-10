@@ -22,8 +22,11 @@ namespace Full
             try
             {
                 meet = classroom.InitMeetInstance(source.Token);
+                logger?.Debug("Starting classroom");
                 Task crTask = classroom.Start();
+                logger?.Debug("Starting meet");
                 Task meetTask = meet.Start();
+                logger?.Debug("Started all");
                 Console.ReadLine();
                 source.Cancel();
                 Task.WaitAll(crTask, meetTask);

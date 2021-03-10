@@ -56,7 +56,7 @@ namespace Full
                         logger.Debug("Succesfully canceled");
                         break;
                     }
-                    Message latest = crBot.GetMessage(0);
+                    Message? latest = crBot.GetMessage(0);
                     if ((Message)latest != last)
                     {
                         logger.Debug("Received message from {0}", latest.Teacher);
