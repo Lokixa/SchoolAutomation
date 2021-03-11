@@ -36,7 +36,7 @@ namespace Full
         {
             Meet meet = new Meet(config, token);
 
-            meet.MeetLookupLink = crBot.GetClassroomMeetLink();
+            meet.ActiveMeetLink = crBot.GetClassroomMeetLink();
             OnGreetingReceived += meet.ReceiveStartMessage;
             return meet;
         }

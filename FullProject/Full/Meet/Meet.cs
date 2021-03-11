@@ -20,8 +20,7 @@ namespace Full
         private readonly MeetBot meetBot;
         private readonly CancellationToken token;
 
-        public string? MeetLookupLink { get; set; }
-        private string? ActiveMeetLink;
+        public string? ActiveMeetLink { get; set; }
         private Message? lastMessage;
 
 
@@ -122,7 +121,7 @@ namespace Full
                 }
             }
 
-            return ActiveMeetLink ?? MeetLookupLink;
+            return ActiveMeetLink;
         }
 
         private async Task TryEnterMeet(string? link)
@@ -187,7 +186,7 @@ namespace Full
             if (meetBot.State != MeetState.InCall) throw new Exception("Not in call");
 
             await Task.Delay(new TimeSpan(0, minutes: 5, 0), token);
-            logger.Debug("Starting exit loop...");
+            logger?.Debug("Starting exit loop...");
 
             while (true)
             {
@@ -200,13 +199,17 @@ namespace Full
                     }
                     catch (OpenQA.Selenium.NoSuchElementException)
                     {
-                        logger.Debug("Failed to fetch people in meet");
+                        logger?.Debug("Failed to fetch people in meet");
+                    }
+                    catch (OpenQA.Selenium.WebDriverTimeoutException)
+                    {
+                        break;
                     }
                 }
 
                 if (peopleInCall < minimumPeople)
                 {
-                    logger.Debug("Leaving at {0} people", peopleInCall);
+                    logger?.Debug("Leaving at {0} people", peopleInCall);
                     break;
                 }
 

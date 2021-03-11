@@ -40,6 +40,18 @@ namespace Full
     }
     public static class Utils
     {
+        public static bool Try(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
         public static bool Retry(Func<bool> predicate, int times = -1)
         {
             bool success = predicate();

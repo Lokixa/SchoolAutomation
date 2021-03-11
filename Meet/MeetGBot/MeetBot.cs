@@ -73,7 +73,6 @@ namespace MeetGBot
             joinButton.Click();
             ChangeState(MeetState.InCall);
         }
-
         public void EnterMeetOverview(string link)
         {
             driver.Navigate().GoToUrl(link);
@@ -174,7 +173,14 @@ namespace MeetGBot
             {
                 throw new InvalidOperationException("Not in meet");
             }
-            Hangup();
+            try
+            {
+                Hangup();
+            }
+            catch (WebDriverTimeoutException)
+            {
+                ChangeState(MeetState.OutsideMeet);
+            }
         }
 
         private bool TryFindElement(By selector)
@@ -217,7 +223,14 @@ namespace MeetGBot
         }
         public override void Dispose()
         {
-            if (State == MeetState.InCall) Hangup();
+            if (State == MeetState.InCall)
+            {
+                try
+                {
+                    Hangup();
+                }
+                catch (Exception ex) { logger.Debug(ex, "Couldn't hangup"); }
+            }
             base.Dispose();
         }
     }
