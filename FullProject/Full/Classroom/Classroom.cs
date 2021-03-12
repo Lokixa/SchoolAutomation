@@ -124,7 +124,7 @@ namespace Full
                 }
                 else logger.Debug("Already greeted {0}", latest.Teacher);
 
-                OnGreetingReceived?.Invoke(bot, eventArgs);
+                OnGreetingReceived?.Invoke(bot, new DataEventArgs<Message>(latest, eventArgs.PreviousData));
             }
         }
 

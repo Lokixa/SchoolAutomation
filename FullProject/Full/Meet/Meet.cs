@@ -72,18 +72,21 @@ namespace Full
                         logger?.Debug("Succesfully canceled");
                         break;
                     }
+                    string? teacher = lastMessage?.Teacher;
                     string? link = GetLink(lastMessage);
+                    logger?.Debug("Got teacher {0}", teacher);
                     // No entry until right message
                     while (link == null && lastMessage != null)
                     {
-                        string teacher = lastMessage.Teacher;
-
                         // Wait for lastMessage update
                         while (teacher == lastMessage.Teacher)
-                            await Task.Delay(new TimeSpan(0, 0, 5), token);
+                            await Task.Delay(new TimeSpan(0, 0, 1), token);
 
                         link = GetLink(lastMessage);
+
+                        teacher = lastMessage.Teacher;
                     }
+                    logger?.Debug("Got link {0}", link);
 
                     if (link == null) logger?.Debug("Link is null");
 
