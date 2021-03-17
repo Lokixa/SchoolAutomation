@@ -21,6 +21,7 @@ namespace Full
         private readonly CancellationToken token;
 
         public string? ActiveMeetLink { get; set; }
+        private Message? activeMessage;
         private Message? lastMessage;
 
 
@@ -43,17 +44,22 @@ namespace Full
 
         public void ReceiveStartMessage(object? sender, DataEventArgs<Message> eventArgs)
         {
-            if (lastMessage != null
-                && !config.SplitClass.ReplacesTeachers.Contains(lastMessage.Teacher))
+            if (activeMessage != null
+                && !config.SplitClass.ReplacesTeachers.Contains(activeMessage.Teacher))
             {
                 logger.Warn("Received new message while last one isn't done");
-                logger.Debug("Last message: {0}", lastMessage);
+                logger.Debug("Last message: {0}", activeMessage);
                 logger.Debug("New message: {0}", eventArgs.Data);
                 logger.Debug("Changing to new message.");
             }
-            lastMessage = eventArgs.Data;
+            if (eventArgs.Data != lastMessage)
+            {
+                activeMessage = eventArgs.Data;
+            }
+
             var bot = sender as ClassroomBot;
             if (bot == null) throw new NullReferenceException("Null classroom bot");
+
             string link = bot.GetClassroomMeetLink();
             if (link != ActiveMeetLink)
             {
@@ -72,19 +78,19 @@ namespace Full
                         logger?.Debug("Succesfully canceled");
                         break;
                     }
-                    string? teacher = lastMessage?.Teacher;
-                    string? link = GetLink(lastMessage);
+                    string? teacher = activeMessage?.Teacher;
+                    string? link = GetLink(activeMessage);
                     logger?.Debug("Got teacher {0}", teacher);
                     // No entry until right message
-                    while (link == null && lastMessage != null)
+                    while (link == null && activeMessage != null)
                     {
                         // Wait for lastMessage update
-                        while (teacher == lastMessage.Teacher)
+                        while (teacher == activeMessage.Teacher)
                             await Task.Delay(new TimeSpan(0, 0, 1), token);
 
-                        link = GetLink(lastMessage);
+                        link = GetLink(activeMessage);
 
-                        teacher = lastMessage.Teacher;
+                        teacher = activeMessage.Teacher;
                     }
                     logger?.Debug("Got link {0}", link);
 
@@ -131,7 +137,7 @@ namespace Full
         {
             if (MeetExists(link))
             {
-                bool langClass = lastMessage != null ? IsLanguageClass(lastMessage) : false;
+                bool langClass = activeMessage != null ? IsLanguageClass(activeMessage) : false;
 
                 int peopleNeeded = GetPeopleNeeded(langClass);
 
@@ -150,13 +156,14 @@ namespace Full
                     if (peopleInOverview >= peopleNeeded)
                     {
                         // Pop
-                        lastMessage = null;
+                        lastMessage = activeMessage;
+                        activeMessage = null;
 
                         logger.Info("Entering meet");
                         logger.Debug("with {0} people", peopleInOverview);
                         meetBot.EnterMeet();
 
-                        await WaitPeopleToLeave(minimumPeople: peopleNeeded);
+                        await WaitForPeopleToLeave(minimumPeople: peopleNeeded);
 
                         logger.Info("Leaving meet");
                         meetBot.LeaveMeet();
@@ -183,7 +190,7 @@ namespace Full
             return false;
         }
 
-        private async Task WaitPeopleToLeave(int minimumPeople)
+        private async Task WaitForPeopleToLeave(int minimumPeople)
         {
             if (minimumPeople < 0) throw new ArgumentOutOfRangeException(nameof(minimumPeople));
             if (meetBot.State != MeetState.InCall) throw new Exception("Not in call");
