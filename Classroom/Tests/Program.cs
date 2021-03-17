@@ -73,48 +73,5 @@ namespace Automation
             }
             return JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
         }
-        private static T LoadFromJson<T>(string filename)
-        {
-            if (!File.Exists(filename))
-            {
-                return default(T);
-            }
-            return JsonConvert.DeserializeObject<T>(File.ReadAllText(filename));
-        }
-        private static void SaveToJson<T>(T obj, string saveAs)
-        {
-            if (obj == null || obj.Equals(default(T)))
-            {
-                Console.WriteLine("Null or default object: " + saveAs);
-                return;
-            }
-            string json = JsonConvert.SerializeObject(obj);
-            Console.WriteLine(json);
-            using (StreamWriter sw = new StreamWriter(saveAs))
-            {
-                sw.WriteLine(json);
-            }
-        }
-    }
-    public static class Extensions
-    {
-        public static bool ContainsGreeting(this string text)
-        {
-            string[] greetings = new string[] {
-                "добър ден","привет","здравейте","hello","очаквам ви","guten tag","good morning","добро утро"
-            };
-            foreach (string greeting in greetings)
-            {
-                if (text.Contains(greeting, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        public static bool IsMeetLink(this string text)
-        {
-            return text.Contains("meet.google.com");
-        }
     }
 }

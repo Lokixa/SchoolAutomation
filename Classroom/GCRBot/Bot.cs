@@ -65,7 +65,7 @@ namespace GCRBot
             catch (WebDriverTimeoutException)
             {
                 logger.Warn("No default meet link in classroom");
-                return "";
+                return string.Empty;
             }
         }
         void UpdateFeed()
