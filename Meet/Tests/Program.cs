@@ -9,8 +9,10 @@ namespace Automation
 {
     class Program
     {
+        static NLog.Logger logger;
         static void Main(string[] args)
         {
+            SetupLogger();
             MeetTest();
         }
 
@@ -39,16 +41,12 @@ namespace Automation
                 bot.EnterMeetOverview("https://meet.google.com/rje-zpyi-jcg");
                 Console.WriteLine(bot.PeopleInMeetOverview());
                 bot.EnterMeet();
-                Console.WriteLine(bot.PeopleInMeet());
-                WaitFor(3).Wait();
+                Task wait = WaitFor(10);
+                while (!wait.IsCompleted)
+                {
+                    Console.WriteLine(bot.PeopleInMeet());
+                }
                 bot.LeaveMeet();
-
-
-                // bot.EnterMeetOverview("https://meet.google.com/ewd-kemi-rny");
-                // Console.WriteLine(bot.PeopleInMeetOverview());
-                // bot.EnterMeet();
-                // await WaitFor(5);
-                // bot.LeaveMeet();
             }
             finally
             {
@@ -60,6 +58,22 @@ namespace Automation
             Console.WriteLine($"Waiting for {seconds} seconds");
             await Task.Delay((int)(seconds * 1000));
             Console.WriteLine($"Done");
+        }
+        private static void SetupLogger()
+        {
+            var config = new NLog.Config.LoggingConfiguration();
+
+            var logconsole = new NLog.Targets.ColoredConsoleTarget("logconsole");
+            var layout = new NLog.Layouts.SimpleLayout(
+                "[${date:format=HH\\:mm\\:ss}][${level}]${logger:shortName=true}: ${message}"
+            );
+            logconsole.Layout = layout;
+            logconsole.Encoding = System.Text.Encoding.UTF8;
+
+            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logconsole, "*");
+
+            NLog.LogManager.Configuration = config;
+            logger = NLog.LogManager.GetCurrentClassLogger();
         }
     }
 }

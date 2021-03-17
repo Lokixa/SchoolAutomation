@@ -7,9 +7,9 @@ using OpenQA.Selenium;
 
 namespace MeetGBot
 {
-    internal class MeetSelectorFactory
+    internal static class MeetSelectorFactory
     {
-        public Dictionary<string, By> ForFirefox()
+        private static Dictionary<string, By> ForFirefox()
         {
             Dictionary<string, By> selectors = new();
 
@@ -17,6 +17,9 @@ namespace MeetGBot
 
             selectors.Add(Elements.MeetChatButton,
                 By.XPath($"{meetCommon}/div[1]/div[3]/div/div[2]/div[1]"));
+
+            selectors.Add(Elements.MeetChatButtonBackup,
+                By.XPath($"{meetCommon}/div[4]/div/div[2]/div[2]/div[1]/div[1]/span/div/span[2]"));
 
             selectors.Add(Elements.MeetHangupButton,
                 By.XPath($"{meetCommon}/div[9]/div[2]/div[2]/div"));
@@ -40,7 +43,7 @@ namespace MeetGBot
 
             return selectors;
         }
-        public Dictionary<string, By> ForChrome()
+        private static Dictionary<string, By> ForChrome()
         {
             Dictionary<string, By> selectors = ForFirefox();
             // Elements.MeetChatButton,
@@ -65,7 +68,7 @@ namespace MeetGBot
 
             return selectors;
         }
-        public ReadOnlyDictionary<string, By> Get(string browser)
+        public static ReadOnlyDictionary<string, By> Get(string browser)
         {
             switch (browser)
             {

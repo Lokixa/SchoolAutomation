@@ -22,6 +22,7 @@ namespace MeetGBot
     {
         private readonly ReadOnlyDictionary<string, By> selectors;
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private readonly WebDriverWait shortWait;
         public MeetState State { get; private set; }
 
         private static Config FixConfig(Config config)
@@ -32,7 +33,9 @@ namespace MeetGBot
         }
         public MeetBot(Config config) : base(FixConfig(config))
         {
-            selectors = new MeetSelectorFactory().Get(config.Driver.Browser);
+            shortWait = new WebDriverWait(driver, new TimeSpan(0, 0, 0, 0, milliseconds: 200));
+
+            selectors = MeetSelectorFactory.Get(config.Driver.Browser);
             State = MeetState.NotLoggedIn;
         }
 
@@ -73,6 +76,26 @@ namespace MeetGBot
             joinButton.Click();
             ChangeState(MeetState.InCall);
         }
+        bool MeetCallPageLoaded()
+        {
+            if (State != MeetState.InCall) throw new InvalidElementStateException("Invalid meet state.");
+            try
+            {
+                IWebElement hangupButton = firstLoad.Until(driver =>
+                    driver.FindElement(selectors[Elements.MeetHangupButton])
+                );
+                return true;
+            }
+            catch (OpenQA.Selenium.WebDriverTimeoutException)
+            {
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "Caught unexpected exception.");
+                throw;
+            }
+        }
         public void EnterMeetOverview(string link)
         {
             driver.Navigate().GoToUrl(link);
@@ -95,21 +118,93 @@ namespace MeetGBot
             {
                 throw new InvalidOperationException("Not in meet call");
             }
-            Regex reg = new Regex("[0-9]*");
+            WebDriverWait waiter = firstLoad;
+            if (MeetCallPageLoaded()) waiter = shortWait;
 
-            IWebElement el = firstLoad.Until(driver =>
-                driver.FindElement(selectors[Elements.MeetChatButton])
-            );
-            firstLoad.Until(driver => el.Enabled && el.Displayed);
+            string textFromSelector = FetchEither(selectors[Elements.MeetChatButton],
+                                                           selectors[Elements.MeetChatButtonBackup],
+                                                           shortWait);
 
-            Match match = reg.Match(el.Text);
-            if (!match.Success || string.IsNullOrEmpty(match.Value))
+            if (string.IsNullOrEmpty(textFromSelector))
             {
-                throw new OpenQA.Selenium.NoSuchElementException("Couldn't parse chat button: " + match.Value);
+                throw new NullReferenceException("Null text from selector");
+            }
+
+            // logger.Debug("Text: '{0}'", textFromSelector);
+
+            Regex reg = new Regex("[0-9]{1,}");
+            Match match = reg.Match(textFromSelector);
+
+            // logger.Debug("Regex value: '{0}'", match.Value);
+
+            if (!match.Success)
+            {
+                throw new OpenQA.Selenium.NoSuchElementException("Unsuccessful regex");
+            }
+            if (string.IsNullOrEmpty(match.Value))
+            {
+                throw new NullReferenceException("Null value of text");
             }
 
             return int.Parse(match.Value);
         }
+
+        private string FetchEither(By selector, By otherSelector, WebDriverWait waiter = null)
+        {
+            /*
+            try
+            {
+                el = GetElement(selector)
+                if(string.IsNullOrEmpty(el.Text))
+                    return FetchElement(backup,selector);
+
+                return el.Text;
+            }
+            catch (WebDriverTimeoutException)
+            {
+                return FetchElement(backup,selector);
+            }
+            */
+            if (waiter == null)
+                waiter = firstLoad;
+
+            Stack<By> stack = new();
+            stack.Push(selector);
+            By activeSelector = null;
+            while (stack.Count > 0)
+            {
+                activeSelector = stack.Pop();
+                try
+                {
+                    IWebElement el = waiter.Until(
+                        driver => driver.FindElement(activeSelector)
+                    );
+                    waiter.Until(driver => el.Enabled && el.Displayed);
+
+                    if (string.IsNullOrEmpty(el.Text))
+                    {
+                        if (activeSelector == otherSelector)
+                            stack.Push(selector);
+                        else if (activeSelector == selector)
+                            stack.Push(otherSelector);
+                    }
+                    else
+                    {
+                        return el.Text;
+                    }
+                }
+                catch (WebDriverTimeoutException)
+                {
+                    if (activeSelector == otherSelector)
+                        stack.Push(selector);
+                    else if (activeSelector == selector)
+                        stack.Push(otherSelector);
+                }
+            }
+            logger.Warn("Didn't expect to be here. Selector: '{0}'", activeSelector);
+            throw new NullReferenceException();
+        }
+
         public int PeopleInMeetOverview()
         {
             if (State != MeetState.InOverview)
@@ -138,7 +233,6 @@ namespace MeetGBot
             }
             else
             {
-                // logger.Trace("Got {0} more people", match.Value);
                 int val = int.Parse(match.Value);
                 return split.Count + val;
             }
@@ -154,7 +248,6 @@ namespace MeetGBot
                 IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
                 firstLoad.Until(driver => joinButton.Displayed);
                 string text = joinButton.Text.Trim();
-                // logger.Debug("Join button text: '{0}'", text);
                 return !(text.Contains("Ask") || text.Contains("Молба"));
             }
             catch (Exception ex)
