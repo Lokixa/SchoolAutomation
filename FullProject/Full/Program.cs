@@ -18,18 +18,27 @@ namespace Full
             CancellationTokenSource source = new();
 
             Classroom classroom = new Classroom(config, source.Token);
-            Meet? meet = null;
+            Meet meet = classroom.InitMeetInstance(source.Token);
             try
             {
-                meet = classroom.InitMeetInstance(source.Token);
                 logger?.Debug("Starting classroom");
-                Task crTask = classroom.Start();
+                Thread crThread = classroom.AsThread();
+                crThread.Start();
+
                 logger?.Debug("Starting meet");
-                Task meetTask = meet.Start();
+                Thread meetThread = meet.AsThread();
+                meetThread.Start();
+
                 logger?.Debug("Started all");
+
                 Console.ReadLine();
+
                 source.Cancel();
-                Task.WaitAll(crTask, meetTask);
+                meetThread.Join();
+            }
+            catch (TaskCanceledException)
+            {
+                logger?.Info("Cancelled all");
             }
             catch (AggregateException ex)
             {
@@ -44,7 +53,7 @@ namespace Full
             finally
             {
                 source.Dispose();
-                meet?.Dispose();
+                meet.Dispose();
                 classroom.Dispose();
             }
         }

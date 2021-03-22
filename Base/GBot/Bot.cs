@@ -45,7 +45,7 @@ namespace GBot
             bool loadedCookies = LoadCookies(CookiesPath);
             logger?.Debug("Loaded {0}: {1}", CookiesPath, loadedCookies);
 
-            driver.Navigate().GoToUrl(LoginLink);
+            defaultWait.Until(driver => driver.Navigate()).GoToUrl(LoginLink);
 
             //TODO Replace with factory method
             bool firefox = config.Driver.Browser == "firefox";
@@ -64,7 +64,8 @@ namespace GBot
                     });
                     if (loggedIn)
                     {
-                        driver.Navigate().GoToUrl(EduLink);
+                        defaultWait.Until(driver => driver.Navigate())
+                            .GoToUrl(EduLink);
 
                         // Save edu.google.com cookies insted of classroom's
                         /*if (firefox)*/
@@ -97,7 +98,7 @@ namespace GBot
                 throw new Exception(nameof(config.Link) + " is invalid");
             }
             logger.Trace("Going home: " + config.Link);
-            driver.Navigate().GoToUrl(config.Link);
+            defaultWait.Until(driver => driver.Navigate()).GoToUrl(config.Link);
         }
 
         protected void SaveCookies(ReadOnlyCollection<Cookie> cookies, string cookiePath)

@@ -37,9 +37,9 @@ namespace Full
             this.token = token;
         }
 
-        public async Task Start()
+        public Thread AsThread()
         {
-            await MeetLoop();
+            return new Thread(Start);
         }
 
         public void ReceiveStartMessage(object? sender, DataEventArgs<Message> eventArgs)
@@ -47,10 +47,10 @@ namespace Full
             if (activeMessage != null
                 && !config.SplitClass.ReplacesTeachers.Contains(activeMessage.Teacher))
             {
-                logger.Warn("Received new message while last one isn't done");
-                logger.Debug("Last message: {0}", activeMessage);
-                logger.Debug("New message: {0}", eventArgs.Data);
-                logger.Debug("Changing to new message.");
+                logger?.Warn("Received new message while last one isn't done");
+                logger?.Debug("Last message: {0}", activeMessage);
+                logger?.Debug("New message: {0}", eventArgs.Data);
+                logger?.Debug("Changing to new message.");
             }
             if (eventArgs.Data != lastMessage)
             {
@@ -64,10 +64,10 @@ namespace Full
             if (link != ActiveMeetLink)
             {
                 ActiveMeetLink = link;
-                logger.Debug("New meet link");
+                logger?.Debug("New meet link");
             }
         }
-        private async Task MeetLoop()
+        public void Start()
         {
             try
             {
@@ -86,7 +86,7 @@ namespace Full
                     {
                         // Wait for lastMessage update
                         while (teacher == activeMessage.Teacher)
-                            await Task.Delay(new TimeSpan(0, 0, 1), token);
+                            Utils.Wait(new TimeSpan(0, 0, seconds: 1), token);
 
                         link = GetLink(activeMessage);
 
@@ -96,18 +96,18 @@ namespace Full
 
                     if (link == null) logger?.Debug("Link is null");
 
-                    await TryEnterMeet(link);
+                    TryEnterMeet(link);
 
-                    await Task.Delay(new TimeSpan(0, 0, seconds: 30), token);
+                    Utils.Wait(new TimeSpan(0, 0, seconds: 30), token);
                 }
             }
             catch (TaskCanceledException)
             {
-                logger.Debug("Successfully canceled");
+                logger?.Debug("Successfully canceled");
             }
             catch (Exception ex)
             {
-                logger.Error(ex);
+                logger?.Error(ex);
             }
         }
 
@@ -133,11 +133,13 @@ namespace Full
             return ActiveMeetLink;
         }
 
-        private async Task TryEnterMeet(string? link)
+        private void TryEnterMeet(string? link)
         {
             if (MeetExists(link))
             {
                 bool langClass = activeMessage != null ? IsLanguageClass(activeMessage) : false;
+                if (activeMessage != null)
+                    logger?.Debug("Got active message: {0}", activeMessage);
 
                 int peopleNeeded = GetPeopleNeeded(langClass);
 
@@ -149,8 +151,9 @@ namespace Full
                     // Wait two minutes
                     for (int i = 0; i < (60 * 2 / seconds) && peopleInOverview < peopleNeeded; i++)
                     {
-                        await Task.Delay(new TimeSpan(0, 0, seconds), token);
+                        Utils.Wait(new TimeSpan(0, 0, seconds), token);
                         peopleInOverview = meetBot.PeopleInMeetOverview();
+                        logger?.Debug("People: {0} / {1}", peopleInOverview, peopleNeeded);
                     }
 
                     if (peopleInOverview >= peopleNeeded)
@@ -159,16 +162,16 @@ namespace Full
                         lastMessage = activeMessage;
                         activeMessage = null;
 
-                        logger.Info("Entering meet");
-                        logger.Debug("with {0} people", peopleInOverview);
+                        logger?.Info("Entering meet");
+                        logger?.Debug("with {0} people", peopleInOverview);
                         meetBot.EnterMeet();
 
-                        await WaitForPeopleToLeave(minimumPeople: peopleNeeded);
+                        WaitForPeopleToLeave(minimumPeople: peopleNeeded);
 
-                        logger.Info("Leaving meet");
+                        logger?.Info("Leaving meet");
                         meetBot.LeaveMeet();
                     }
-                    logger.Debug("Back to meet loop");
+                    logger?.Debug("Back to meet loop");
                 }
             }
         }
@@ -178,43 +181,38 @@ namespace Full
             if (lastMessage == null)
                 throw new ArgumentNullException(nameof(lastMessage));
 
-            if (config.SplitClass.ReplacesTeachers.Contains(lastMessage.Teacher))
+            if (config.SplitClass.Teacher == lastMessage.Teacher)
             {
-                if (config.SplitClass.Teacher != lastMessage.Teacher)
-                {
-                    throw new ArgumentException("Received a wrong language class");
-                }
                 return true;
             }
 
             return false;
         }
 
-        private async Task WaitForPeopleToLeave(int minimumPeople)
+        private void WaitForPeopleToLeave(int minimumPeople)
         {
             if (minimumPeople < 0) throw new ArgumentOutOfRangeException(nameof(minimumPeople));
             if (meetBot.State != MeetState.InCall) throw new Exception("Not in call");
 
-            await Task.Delay(new TimeSpan(0, minutes: 5, 0), token);
+            Utils.Wait(new TimeSpan(0, minutes: 5, 0), token);
             logger?.Debug("Starting exit loop...");
 
+            int peopleInCall = 0;
             while (true)
             {
-                int peopleInCall = -1;
-                while (peopleInCall == -1)
+                try
                 {
-                    try
-                    {
-                        peopleInCall = meetBot.PeopleInMeet();
-                    }
-                    catch (OpenQA.Selenium.NoSuchElementException)
-                    {
-                        logger?.Debug("Failed to fetch people in meet");
-                    }
-                    catch (OpenQA.Selenium.WebDriverTimeoutException)
-                    {
-                        break;
-                    }
+                    peopleInCall = meetBot.PeopleInMeet();
+                    logger?.Debug("Fetched people in call: {0}", peopleInCall);
+                }
+                catch (OpenQA.Selenium.NoSuchElementException)
+                {
+                    logger?.Debug("Failed to fetch people in meet");
+                }
+                catch (OpenQA.Selenium.WebDriverTimeoutException)
+                {
+                    logger?.Info("Kicked out of meet");
+                    break;
                 }
 
                 if (peopleInCall < minimumPeople)
@@ -223,7 +221,7 @@ namespace Full
                     break;
                 }
 
-                await Task.Delay(new TimeSpan(0, 0, seconds: 5), token);
+                Utils.Wait(new TimeSpan(0, 0, seconds: 5), token);
             }
 
         }
@@ -253,7 +251,7 @@ namespace Full
             if (meetBot.State != MeetState.OutsideMeet
                && meetBot.State != MeetState.InOverview)
             {
-                logger.Error("Invalid state: {0}", meetBot.State);
+                logger?.Error("Invalid state: {0}", meetBot.State);
                 throw new InvalidOperationException("Invalid state");
             }
 
@@ -267,7 +265,7 @@ namespace Full
                 // Most likely
                 if (link.Contains("/lookup/"))
                 {
-                    logger.Debug("No meet in lookup link (timeout)");
+                    logger?.Debug("No meet in lookup link (timeout)");
                     return false;
                 }
 
@@ -277,7 +275,7 @@ namespace Full
             {
                 if (link.Contains("/lookup/"))
                 {
-                    logger.Debug("No meet in lookup link (stale element)");
+                    logger?.Debug("No meet in lookup link (stale element)");
                     return false;
                 }
 
@@ -287,13 +285,13 @@ namespace Full
 
         private void Login()
         {
-            if (meetBot.State != MeetState.NotLoggedIn) logger.Fatal("Wanting to login while logged");
+            if (meetBot.State != MeetState.NotLoggedIn) logger?.Fatal("Wanting to login while logged");
             bool loggedIn = Utils.Retry(meetBot.Login, 3);
             if (!loggedIn)
             {
                 throw new Exception("Not logged in");
             }
-            logger.Debug("Logged in");
+            logger?.Debug("Logged in");
         }
 
         public void Dispose()

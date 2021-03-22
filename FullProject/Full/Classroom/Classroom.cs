@@ -40,12 +40,9 @@ namespace Full
             OnGreetingReceived += meet.ReceiveStartMessage;
             return meet;
         }
+        public Thread AsThread() => new Thread(Start);
 
-        public async Task Start()
-        {
-            await GetMessageLoop();
-        }
-        public async Task GetMessageLoop()
+        public void Start()
         {
             try
             {
@@ -66,9 +63,9 @@ namespace Full
                         last = latest;
                     }
                     if (token == null)
-                        await Task.Delay(new TimeSpan(0, minutes: 3, 0));
+                        Utils.Wait(new TimeSpan(0, minutes: 3, 0));
                     else
-                        await Task.Delay(new TimeSpan(0, minutes: 3, 0), (CancellationToken)token);
+                        Utils.Wait(new TimeSpan(0, minutes: 3, 0), (CancellationToken)token);
                 }
             }
             catch (TaskCanceledException)

@@ -1,5 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using GCRBot;
 using GCRBot.Data;
 
@@ -73,6 +76,27 @@ namespace Full
                 }
             }
             return success;
+        }
+        public static void Wait(TimeSpan timeSpan, CancellationToken token)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            while (sw.IsRunning && sw.Elapsed < timeSpan)
+            {
+                if (token.IsCancellationRequested) throw new TaskCanceledException();
+                Thread.Sleep(50);
+            }
+            sw.Stop();
+        }
+        public static void Wait(TimeSpan timeSpan)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            while (sw.IsRunning && sw.Elapsed < timeSpan)
+            {
+                Thread.Sleep(50);
+            }
+            sw.Stop();
         }
         public static string MeetLink(this string text)
         {

@@ -98,7 +98,9 @@ namespace MeetGBot
         }
         public void EnterMeetOverview(string link)
         {
-            driver.Navigate().GoToUrl(link);
+            userWait.Until(driver =>
+                driver.Navigate()
+            ).GoToUrl(link);
             if (link.Contains("/lookup/"))
             {
                 logger.Debug("In lookup");
@@ -171,8 +173,13 @@ namespace MeetGBot
             Stack<By> stack = new();
             stack.Push(selector);
             By activeSelector = null;
+            int loopCounter = 0;
             while (stack.Count > 0)
             {
+                if (loopCounter == 2)
+                {
+                    throw new WebDriverTimeoutException();
+                }
                 activeSelector = stack.Pop();
                 try
                 {
@@ -187,6 +194,7 @@ namespace MeetGBot
                             stack.Push(selector);
                         else if (activeSelector == selector)
                             stack.Push(otherSelector);
+
                     }
                     else
                     {
@@ -199,7 +207,9 @@ namespace MeetGBot
                         stack.Push(selector);
                     else if (activeSelector == selector)
                         stack.Push(otherSelector);
+
                 }
+                loopCounter++;
             }
             logger.Warn("Didn't expect to be here. Selector: '{0}'", activeSelector);
             throw new NullReferenceException();
