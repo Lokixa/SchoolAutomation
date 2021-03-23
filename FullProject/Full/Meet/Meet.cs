@@ -69,45 +69,50 @@ namespace Full
         }
         public void Start()
         {
-            try
+            while (true)
             {
-                while (true)
+                try
                 {
-                    if (token.IsCancellationRequested)
+                    while (true)
                     {
-                        logger?.Debug("Succesfully canceled");
-                        break;
+                        if (token.IsCancellationRequested)
+                        {
+                            logger?.Debug("Succesfully canceled");
+                            break;
+                        }
+                        string? teacher = activeMessage?.Teacher;
+                        string? link = GetLink(activeMessage);
+                        logger?.Debug("Got teacher {0}", teacher);
+                        // No entry until right message
+                        while (link == null && activeMessage != null)
+                        {
+                            // Wait for lastMessage update
+                            while (teacher == activeMessage.Teacher)
+                                Utils.Wait(new TimeSpan(0, 0, seconds: 1), token);
+
+                            link = GetLink(activeMessage);
+
+                            teacher = activeMessage.Teacher;
+                        }
+                        logger?.Debug("Got link {0}", link);
+
+                        if (link == null) logger?.Debug("Link is null");
+
+                        TryEnterMeet(link);
+
+                        Utils.Wait(new TimeSpan(0, 0, seconds: 30), token);
                     }
-                    string? teacher = activeMessage?.Teacher;
-                    string? link = GetLink(activeMessage);
-                    logger?.Debug("Got teacher {0}", teacher);
-                    // No entry until right message
-                    while (link == null && activeMessage != null)
-                    {
-                        // Wait for lastMessage update
-                        while (teacher == activeMessage.Teacher)
-                            Utils.Wait(new TimeSpan(0, 0, seconds: 1), token);
-
-                        link = GetLink(activeMessage);
-
-                        teacher = activeMessage.Teacher;
-                    }
-                    logger?.Debug("Got link {0}", link);
-
-                    if (link == null) logger?.Debug("Link is null");
-
-                    TryEnterMeet(link);
-
-                    Utils.Wait(new TimeSpan(0, 0, seconds: 30), token);
                 }
-            }
-            catch (TaskCanceledException)
-            {
-                logger?.Debug("Successfully canceled");
-            }
-            catch (Exception ex)
-            {
-                logger?.Error(ex);
+                catch (TaskCanceledException)
+                {
+                    logger?.Debug("Successfully canceled");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    logger?.Error(ex);
+                }
+                logger?.Info("Restarting meet loop");
             }
         }
 

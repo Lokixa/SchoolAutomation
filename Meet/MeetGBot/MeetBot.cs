@@ -256,6 +256,7 @@ namespace MeetGBot
             try
             {
                 IWebElement joinButton = driver.FindElement(selectors[Elements.JoinButton]);
+                //TODO Check if can be displayed && enabled
                 firstLoad.Until(driver => joinButton.Displayed);
                 string text = joinButton.Text.Trim();
                 return !(text.Contains("Ask") || text.Contains("Молба"));
