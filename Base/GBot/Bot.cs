@@ -37,7 +37,7 @@ namespace GBot
             firstLoad = new WebDriverWait(driver, new TimeSpan(0, 0, seconds: 15));
             userWait = new WebDriverWait(driver, new TimeSpan(0, minutes: 5, 0));
         }
-        protected virtual bool Login(bool goToConfigLink = true)
+        protected virtual bool Login()
         {
             defaultWait.Until(driver => driver.Navigate()).GoToUrl(EduLink);
             firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
@@ -64,14 +64,7 @@ namespace GBot
                     });
                     if (loggedIn)
                     {
-                        defaultWait.Until(driver => driver.Navigate())
-                            .GoToUrl(EduLink);
-
-                        // Save edu.google.com cookies insted of classroom's
-                        /*if (firefox)*/
-                        firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
-
-                        SaveCookies(driver.Manage().Cookies.AllCookies, CookiesPath);
+                        SaveDriverCookies();
                     }
                 }
                 else
@@ -81,7 +74,7 @@ namespace GBot
                         return driver.Url.Contains(ClassroomLink);
                     });
                 }
-                if (loggedIn && goToConfigLink) GoHome();
+                // if (loggedIn && goToConfigLink) GoHome();
                 return loggedIn;
 
             }
@@ -100,11 +93,26 @@ namespace GBot
             logger.Trace("Going home: " + config.Link);
             defaultWait.Until(driver => driver.Navigate()).GoToUrl(config.Link);
         }
+        protected void SaveDriverCookies()
+        {
+            defaultWait.Until(driver => driver.Navigate())
+                .GoToUrl(EduLink);
+
+            // Save edu.google.com cookies insted of classroom's
+            /*if (firefox)*/
+            firstLoad.Until(driver => driver.Url.Contains(EDU_URI));
+
+            SaveCookies(driver.Manage().Cookies.AllCookies, CookiesPath);
+        }
 
         protected void SaveCookies(ReadOnlyCollection<Cookie> cookies, string cookiePath)
         {
-            logger.Debug("Saving cookies to " + cookiePath);
-            File.WriteAllText(cookiePath, JsonConvert.SerializeObject(cookies));
+            if (!File.Exists(cookiePath))
+            {
+                logger.Debug("Saving cookies to " + cookiePath);
+                File.WriteAllText(cookiePath, JsonConvert.SerializeObject(cookies));
+            }
+            else logger?.Debug("Cookie file already exists");
         }
         protected bool LoadCookies(string cookiePath)
         {
@@ -112,10 +120,22 @@ namespace GBot
             var dictArr = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(File.ReadAllText(cookiePath));
             var cookies = driver.Manage().Cookies;
             int addedCookies = 0;
+            int expiredCookies = 0;
             foreach (Dictionary<string, object> dict in dictArr)
             {
+                Cookie cookie = Cookie.FromDictionary(dict);
+                if (cookie?.Expiry < DateTime.Now)
+                {
+                    expiredCookies++;
+                }
                 cookies.AddCookie(Cookie.FromDictionary(dict));
                 addedCookies++;
+            }
+            if (expiredCookies == addedCookies)
+            {
+                logger?.Info("Refreshing expired cookies");
+                File.Delete(cookiePath);
+                return false;
             }
             logger?.Debug("Loaded {0} cookies", addedCookies);
             return addedCookies > 0;
@@ -136,6 +156,8 @@ namespace GBot
 
         public virtual void Dispose()
         {
+            driver.Close();
+            driver.Quit();
             driver.Dispose();
         }
     }

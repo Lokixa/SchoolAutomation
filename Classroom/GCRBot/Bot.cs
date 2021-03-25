@@ -23,7 +23,7 @@ namespace GCRBot
             selFetcher = new SelectorFetcher(driver);
             selectors = ClassroomSelectorFactory.Get(config.Driver.Browser);
         }
-        public bool Login()
+        public new bool Login()
         {
             string path = Path.Combine(config.Driver.CookieFolder, Cookies.GetName(config.Driver.Browser));
             logger.Debug("Cookie path: " + path);
@@ -41,8 +41,8 @@ namespace GCRBot
                     loginBot = new LoginBot(loginConf);
 
                     // Assumes user login
-                    bool loggedIn = loginBot.Login();
-                    if (!loggedIn) logger.Debug("LoginBot failed");
+                    bool login = loginBot.Login();
+                    if (!login) logger.Debug("LoginBot failed");
                 }
                 finally
                 {
@@ -51,7 +51,12 @@ namespace GCRBot
             }
             logger.Trace("On to base login");
             // Assumes cookies exist
-            return base.Login(goToConfigLink: true);
+            bool loggedIn = base.Login();
+            if (loggedIn)
+            {
+                GoHome();
+            }
+            return loggedIn;
         }
         public string GetClassroomMeetLink()
         {
@@ -93,9 +98,6 @@ namespace GCRBot
         {
 
         }
-        public bool Login()
-        {
-            return base.Login(goToConfigLink: false);
-        }
+        public new bool Login() => base.Login();
     }
 }

@@ -39,9 +39,9 @@ namespace MeetGBot
             State = MeetState.NotLoggedIn;
         }
 
-        public bool Login()
+        public new bool Login()
         {
-            bool loggedIn = base.Login(goToConfigLink: false);
+            bool loggedIn = base.Login();
             if (loggedIn)
             {
                 ChangeState(MeetState.OutsideMeet);

@@ -53,6 +53,7 @@ namespace GBot
                     if (config.Headless) chromeOpts.AddArgument("--headless");
                     chromeOpts.AddArgument("--log-level=3");
                     chromeOpts.AddArgument("--silent");
+                    chromeOpts.AddArgument("no-sandbox");
 
                     opts = chromeOpts;
                     break;

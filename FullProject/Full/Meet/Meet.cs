@@ -8,6 +8,7 @@ using GBot;
 using GCRBot;
 using GCRBot.Data;
 using MeetGBot;
+using OpenQA.Selenium;
 
 namespace Full
 {
@@ -17,9 +18,9 @@ namespace Full
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly FullConfig config;
-        private readonly MeetBot meetBot;
         private readonly CancellationToken token;
 
+        private MeetBot meetBot;
         public string? ActiveMeetLink { get; set; }
         private Message? activeMessage;
         private Message? lastMessage;
@@ -73,46 +74,50 @@ namespace Full
             {
                 try
                 {
-                    while (true)
+                    if (token.IsCancellationRequested)
                     {
-                        if (token.IsCancellationRequested)
-                        {
-                            logger?.Debug("Succesfully canceled");
-                            break;
-                        }
-                        string? teacher = activeMessage?.Teacher;
-                        string? link = GetLink(activeMessage);
-                        logger?.Debug("Got teacher {0}", teacher);
-                        // No entry until right message
-                        while (link == null && activeMessage != null)
-                        {
-                            // Wait for lastMessage update
-                            while (teacher == activeMessage.Teacher)
-                                Utils.Wait(new TimeSpan(0, 0, seconds: 1), token);
-
-                            link = GetLink(activeMessage);
-
-                            teacher = activeMessage.Teacher;
-                        }
-                        logger?.Debug("Got link {0}", link);
-
-                        if (link == null) logger?.Debug("Link is null");
-
-                        TryEnterMeet(link);
-
-                        Utils.Wait(new TimeSpan(0, 0, seconds: 30), token);
+                        logger?.Debug("Succesfully canceled");
+                        break;
                     }
+                    string? teacher = activeMessage?.Teacher;
+                    string? link = GetLink(activeMessage);
+                    logger?.Debug("Got teacher {0}", teacher);
+                    // No entry until right message
+                    while (link == null && activeMessage != null)
+                    {
+                        // Wait for lastMessage update
+                        while (teacher == activeMessage.Teacher)
+                            Utils.Wait(new TimeSpan(0, 0, seconds: 1), token);
+
+                        link = GetLink(activeMessage);
+
+                        teacher = activeMessage.Teacher;
+                    }
+                    logger?.Debug("Got link {0}", link);
+
+                    if (link == null) logger?.Debug("Link is null");
+
+                    TryEnterMeet(link);
+
+                    Utils.Wait(new TimeSpan(0, 0, seconds: 30), token);
                 }
                 catch (TaskCanceledException)
                 {
                     logger?.Debug("Successfully canceled");
                     break;
                 }
+                catch (WebDriverException)
+                {
+                    meetBot.Dispose();
+                    meetBot = new MeetBot(config);
+                    Login();
+                    logger?.Info("Restarting meet module");
+                }
                 catch (Exception ex)
                 {
                     logger?.Error(ex);
+                    logger?.Info("Restarting meet loop");
                 }
-                logger?.Info("Restarting meet loop");
             }
         }
 
@@ -208,7 +213,7 @@ namespace Full
                 try
                 {
                     peopleInCall = meetBot.PeopleInMeet();
-                    logger?.Debug("Fetched people in call: {0}", peopleInCall);
+                    logger?.Trace("Fetched people in call: {0}", peopleInCall);
                 }
                 catch (OpenQA.Selenium.NoSuchElementException)
                 {

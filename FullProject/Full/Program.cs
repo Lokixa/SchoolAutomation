@@ -77,7 +77,7 @@ namespace Full
             logfile.Layout = layout;
             logfile.Encoding = System.Text.Encoding.UTF8;
 
-            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logconsole, "*");
+            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logconsole, "*");
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logfile, "*");
 
             NLog.LogManager.Configuration = config;

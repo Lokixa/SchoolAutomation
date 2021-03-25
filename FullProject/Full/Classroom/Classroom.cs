@@ -117,7 +117,7 @@ namespace Full
                 // Greet latest message
                 if (bot.Greet(latest))
                 {
-                    logger.Info("Said 'добър ден.' to {0}", latest.Teacher);
+                    logger.Info("Said 'Добър ден.' to {0}", latest.Teacher);
                 }
                 else logger.Debug("Already greeted {0}", latest.Teacher);
 
