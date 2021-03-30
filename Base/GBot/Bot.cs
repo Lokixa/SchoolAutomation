@@ -156,7 +156,6 @@ namespace GBot
 
         public virtual void Dispose()
         {
-            driver.Close();
             driver.Quit();
             driver.Dispose();
         }
