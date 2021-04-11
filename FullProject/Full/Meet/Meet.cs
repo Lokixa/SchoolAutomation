@@ -108,10 +108,17 @@ namespace Full
                 }
                 catch (WebDriverException)
                 {
-                    meetBot.Dispose();
-                    meetBot = new MeetBot(config);
-                    Login();
-                    logger?.Info("Restarting meet module");
+                    try
+                    {
+                        meetBot.RefreshPage();
+                    }
+                    catch (Exception ex)
+                    {
+                        meetBot.Dispose();
+                        meetBot = new MeetBot(config);
+                        Login();
+                        logger?.Info(ex, "Restarting meet module");
+                    }
                 }
                 catch (Exception ex)
                 {

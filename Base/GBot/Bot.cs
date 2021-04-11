@@ -17,7 +17,7 @@ namespace GBot
         const string CLASSROOM_URI = "classroom.google.com";
         const string EDU_URI = "edu.google.com";
 
-        static readonly string LoginLink = $"https://{CLASSROOM_URI}/u";
+        static readonly string LoginLink = $"https://{CLASSROOM_URI}/u/0/h";
         static readonly string ClassroomLink = $"https://{CLASSROOM_URI}";
         static readonly string EduLink = $"https://{EDU_URI}";
 

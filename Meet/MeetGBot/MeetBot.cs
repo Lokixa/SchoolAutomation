@@ -287,6 +287,8 @@ namespace MeetGBot
             }
         }
 
+        public void RefreshPage() => firstLoad.Until(driver => driver.Navigate()).Refresh();
+
         private bool TryFindElement(By selector)
         {
             try
@@ -335,6 +337,7 @@ namespace MeetGBot
                 }
                 catch (Exception ex) { logger.Debug(ex, "Couldn't hangup"); }
             }
+            driver.Navigate().Refresh();
             base.Dispose();
         }
     }
