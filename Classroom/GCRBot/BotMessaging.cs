@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using GBot.Extensions;
 using GCRBot.Data;
 using OpenQA.Selenium;
 
@@ -48,35 +49,25 @@ namespace GCRBot
         {
             int amount = AmountOfComments(message);
             logger.Trace("Got amount of comments: {0}", amount);
-            if (amount == 0)
+            if (amount > 0)
             {
-                return false;
-            }
-            if (amount == 1)
-            {
-                IWebElement comments = defaultWait.Until(driver =>
-                    message.WebElement.FindElement(selectors[Elements.RelativeMessageComments])
-                );
-                IWebElement settings = comments.FindElement(By.XPath(".//div[last()]/div/div/div/div[1]/div[2]/div[1]"));
-                string label = settings.GetAttribute("aria-label");
-                return IsOwnComment(label);
-            }
-            else
-            {
-                IWebElement comments = defaultWait.Until(driver =>
-                    message.WebElement.FindElement(selectors[Elements.RelativeMessageComments])
-                );
-                comments.Click();
                 for (int i = 1; i <= amount; i++)
                 {
-                    string fullSelector = $".//div[{i}]/div/div/div/div[1]/div[2]/div[1]";
-                    IWebElement settings = comments.FindElement(By.XPath(fullSelector));
+                    string stringSelector = selectors[Elements.RelativeMessageComments].ToString();
+                    string xpathFromString = stringSelector.Substring(stringSelector.IndexOf('/'));
+
+                    string fullSelector = $"./{xpathFromString}/div[{i}]/div/div/div/div[1]/div[2]/div[1]";
+
+                    IWebElement settings = defaultWait.Until(driver =>
+                        message.WebElement.FindElement(By.XPath(fullSelector))
+                    );
+
                     string label = settings.GetAttribute("aria-label");
                     if (IsOwnComment(label)) return true;
                 }
-                return false;
             }
-            throw new NotImplementedException();
+
+            return false;
         }
         private bool IsOwnComment(string label) => string.IsNullOrEmpty(label);
         private bool ShowMoreComments(Message message)

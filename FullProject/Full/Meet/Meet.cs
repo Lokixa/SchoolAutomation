@@ -232,7 +232,7 @@ namespace Full
                     break;
                 }
 
-                if (peopleInCall < minimumPeople)
+                if (peopleInCall <= minimumPeople)
                 {
                     logger?.Debug("Leaving at {0} people", peopleInCall);
                     break;

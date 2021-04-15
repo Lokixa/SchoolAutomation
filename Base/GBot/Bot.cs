@@ -36,6 +36,10 @@ namespace GBot
             defaultWait = new WebDriverWait(driver, new TimeSpan(0, 0, seconds: 10));
             firstLoad = new WebDriverWait(driver, new TimeSpan(0, 0, seconds: 15));
             userWait = new WebDriverWait(driver, new TimeSpan(0, minutes: 5, 0));
+
+            defaultWait.Until(
+                driver => driver.Manage().Timeouts()
+            ).PageLoad = new TimeSpan(0, 0, seconds: 30);
         }
         protected virtual bool Login()
         {
