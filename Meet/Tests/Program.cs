@@ -46,6 +46,8 @@ namespace Automation
                 {
                     Console.WriteLine(bot.PeopleInMeet());
                 }
+                Console.WriteLine("Press enter to quit...");
+                Console.ReadLine();
                 bot.LeaveMeet();
             }
             finally

@@ -54,6 +54,7 @@ namespace Full
                         logger.Debug("Succesfully canceled");
                         break;
                     }
+                    crBot.RefreshPage();
                     Message? latest = crBot.GetMessage(0);
                     if ((Message)latest != last)
                     {
@@ -77,6 +78,8 @@ namespace Full
                 logger.Error(ex);
             }
         }
+
+
         private void Login()
         {
             bool loggedIn = Utils.Retry(crBot.Login, times: 3);

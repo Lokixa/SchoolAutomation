@@ -62,6 +62,7 @@ namespace GCRBot
         {
             try
             {
+                logger.Trace("Updating feed...");
                 IWebElement link = firstLoad.Until(driver =>
                     driver.FindElement(selectors[Elements.ClassroomMeetLink]));
                 firstLoad.Until(driver => link.Enabled);
@@ -77,7 +78,11 @@ namespace GCRBot
         {
             try
             {
-                logger.Trace("Updating feed");
+                // logger.Trace("Updating feed...");
+                // firstLoad.Until(driver =>
+                //     driver.Navigate()
+                // ).Refresh();
+
                 IWebElement el = driver.FindElement(selectors[Elements.ShowMoreButton]);
                 if (el.Displayed)
                 {
@@ -85,10 +90,10 @@ namespace GCRBot
                     el.Click();
                 }
             }
-            catch (NoSuchElementException)
+            catch (Exception ex)
             {
                 // Do nothing.
-                logger.Trace("Couldn't update feed...");
+                logger.Debug(ex, "Couldn't update feed...");
             }
         }
     }

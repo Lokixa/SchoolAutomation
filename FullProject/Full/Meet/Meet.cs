@@ -48,10 +48,13 @@ namespace Full
             if (activeMessage != null
                 && !config.SplitClass.ReplacesTeachers.Contains(activeMessage.Teacher))
             {
-                logger?.Warn("Received new message while last one isn't done");
-                logger?.Debug("Last message: {0}", activeMessage);
-                logger?.Debug("New message: {0}", eventArgs.Data);
-                logger?.Debug("Changing to new message.");
+                if (activeMessage.Information != eventArgs.Data.Information)
+                {
+                    logger?.Warn("Received new message while last one isn't done");
+                    logger?.Debug("Last message: {0}", activeMessage);
+                    logger?.Debug("New message: {0}", eventArgs.Data);
+                    logger?.Debug("Changing to new message.");
+                }
             }
             if (eventArgs.Data != lastMessage)
             {
@@ -228,8 +231,19 @@ namespace Full
                 }
                 catch (OpenQA.Selenium.WebDriverTimeoutException)
                 {
-                    logger?.Info("Kicked out of meet");
-                    break;
+                    if (!meetBot.InMeetCall())
+                    {
+                        logger?.Info("Kicked out of meet");
+                        break;
+                    }
+                    else
+                    {
+                        logger?.Debug("Couldn't fetch people in meet");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger?.Debug(ex, "Caught unhandled exception");
                 }
 
                 if (peopleInCall <= minimumPeople)

@@ -76,7 +76,7 @@ namespace MeetGBot
             joinButton.Click();
             ChangeState(MeetState.InCall);
         }
-        bool MeetCallPageLoaded()
+        public bool InMeetCall()
         {
             if (State != MeetState.InCall) throw new InvalidElementStateException("Invalid meet state.");
             try
@@ -121,13 +121,15 @@ namespace MeetGBot
                 throw new InvalidOperationException("Not in meet call");
             }
             WebDriverWait waiter = firstLoad;
-            if (MeetCallPageLoaded()) waiter = shortWait;
+            if (InMeetCall()) waiter = shortWait;
 
-            string textFromSelector = FetchEither(selectors[Elements.MeetChatButton],
-                                                           selectors[Elements.MeetChatButtonBackup],
+            string peopleInMeet = FetchEither(selectors[Elements.MeetPeopleButton],
+                                                           selectors[Elements.MeetPeopleButtonOnOpenChat],
                                                            shortWait);
 
-            if (string.IsNullOrEmpty(textFromSelector))
+            // logger.Debug("Got people in meet: {0}", peopleInMeet);
+
+            if (string.IsNullOrEmpty(peopleInMeet))
             {
                 throw new NullReferenceException("Null text from selector");
             }
@@ -135,9 +137,9 @@ namespace MeetGBot
             // logger.Debug("Text: '{0}'", textFromSelector);
 
             Regex reg = new Regex("[0-9]{1,}");
-            Match match = reg.Match(textFromSelector);
+            Match match = reg.Match(peopleInMeet);
 
-            // logger.Debug("Regex value: '{0}'", match.Value);
+            // logger.Debug("Matched: '{0}'", match.Value);
 
             if (!match.Success)
             {
@@ -154,18 +156,17 @@ namespace MeetGBot
         private string FetchEither(By selector, By otherSelector, WebDriverWait waiter = null)
         {
             /*
-            try
-            {
-                el = GetElement(selector)
-                if(string.IsNullOrEmpty(el.Text))
+                try
+                {
+                    el = GetElement(selector)
+                    if(string.IsNullOrEmpty(el.Text))
+                        return FetchElement(backup,selector);
+                    return el.Text;
+                }
+                catch (WebDriverTimeoutException)
+                {
                     return FetchElement(backup,selector);
-
-                return el.Text;
-            }
-            catch (WebDriverTimeoutException)
-            {
-                return FetchElement(backup,selector);
-            }
+                }
             */
             if (waiter == null)
                 waiter = firstLoad;
@@ -228,23 +229,23 @@ namespace MeetGBot
             if (peopleInCall.Contains("No one")) return 0;
             else if (peopleInCall.Contains(" is ")) return 1;
 
-            List<string> split = peopleInCall.Split(", ").ToList();
-            string[] andSplit = split[split.Count - 1].Split("and");
+            List<string> splitPeople = peopleInCall.Split(", ").ToList();
+            string[] andSplit = splitPeople[splitPeople.Count - 1].Split("and");
 
-            split.Remove(split[split.Count - 1]);
+            splitPeople.Remove(splitPeople[splitPeople.Count - 1]);
 
-            split.Add(andSplit[0]);
+            splitPeople.Add(andSplit[0]);
             Regex reg = new Regex("[0-9]*");
             var match = reg.Match(andSplit[1].Trim());
             if (!match.Success || string.IsNullOrEmpty(match.Value))
             {
-                split.Add(andSplit[1]);
-                return split.Count;
+                splitPeople.Add(andSplit[1]);
+                return splitPeople.Count;
             }
             else
             {
-                int val = int.Parse(match.Value);
-                return split.Count + val;
+                int number = int.Parse(match.Value);
+                return splitPeople.Count + number;
             }
         }
         public bool CanJoin()
@@ -286,8 +287,6 @@ namespace MeetGBot
                 ChangeState(MeetState.OutsideMeet);
             }
         }
-
-        public void RefreshPage() => firstLoad.Until(driver => driver.Navigate()).Refresh();
 
         private bool TryFindElement(By selector)
         {

@@ -15,11 +15,11 @@ namespace MeetGBot
 
             string meetCommon = "/html/body/div[1]/c-wiz/div[1]/div/div[9]/div[3]";
 
-            selectors.Add(Elements.MeetChatButton,
+            selectors.Add(Elements.MeetPeopleButton,
                 By.XPath($"{meetCommon}/div[1]/div[3]/div/div[2]/div[1]"));
 
-            selectors.Add(Elements.MeetChatButtonBackup,
-                By.XPath($"{meetCommon}/div[4]/div/div[2]/div[2]/div[1]/div[1]/span/div/span[2]"));
+            selectors.Add(Elements.MeetPeopleButtonOnOpenChat,
+                By.XPath($"{meetCommon}/div[4]/div/div[2]/div[2]/div[1]/div[1]/span/div/span"));
 
             selectors.Add(Elements.MeetHangupButton,
                 By.XPath($"{meetCommon}/div[9]/div[2]/div[2]/div"));
@@ -49,13 +49,19 @@ namespace MeetGBot
             // Elements.MeetChatButton,
             // Elements.MeetHangupButton,
 
-            const string common = "/html/body/div[1]/c-wiz/div[1]/div/div[9]/div[3]/div/div/div[2]/div/div[1]";
+            const string common = "/html/body/div[1]/c-wiz/div/div/div[9]/div[3]/div/div/div[2]/div/div[1]";
 
             selectors[Elements.CameraButton] =
                 By.XPath($"{common}/div[1]/div[1]/div/div[3]/div[2]/div/div");
 
+            // /div[1]/div[1]/div/div[3]/div[2]/div/div
+            // /div[1]/div[1]/div/div[4]/div[2]/div/div - bojkata
+
             selectors[Elements.MicrophoneButton] =
                 By.XPath($"{common}/div[1]/div[1]/div/div[3]/div[1]/div/div/div");
+
+            // /div[1]/div[1]/div/div[3]/div[1]/div/div/div
+            // /div[1]/div[1]/div/div[4]/div[1]/div/div/div - bojkata
 
             selectors[Elements.JoinButton] =
                 By.XPath($"{common}/div[2]/div/div[2]/div/div[1]/div[1]");

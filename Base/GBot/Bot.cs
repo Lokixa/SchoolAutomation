@@ -144,6 +144,12 @@ namespace GBot
             logger?.Debug("Loaded {0} cookies", addedCookies);
             return addedCookies > 0;
         }
+        public void RefreshPage()
+        {
+            firstLoad.Until(driver =>
+                driver.Navigate()
+            ).Refresh();
+        }
 
         public static void CreateEmpty<T>(string directory = "./") where T : Config, new()
         {
