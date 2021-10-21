@@ -62,10 +62,9 @@ namespace GCRBot
         {
             try
             {
-                logger.Trace("Updating feed...");
                 IWebElement link = firstLoad.Until(driver =>
                     driver.FindElement(selectors[Elements.ClassroomMeetLink]));
-                firstLoad.Until(driver => link.Enabled);
+                firstLoad.Until(driver => link.Enabled && link.Displayed);
                 return link.Text;
             }
             catch (WebDriverTimeoutException)

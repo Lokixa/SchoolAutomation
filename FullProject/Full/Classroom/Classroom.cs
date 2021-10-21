@@ -64,9 +64,9 @@ namespace Full
                         last = latest;
                     }
                     if (token == null)
-                        Utils.Wait(new TimeSpan(0, minutes: 3, 0));
+                        Utils.Wait(new TimeSpan(0, minutes: 1, 0));
                     else
-                        Utils.Wait(new TimeSpan(0, minutes: 3, 0), (CancellationToken)token);
+                        Utils.Wait(new TimeSpan(0, minutes: 1, 0), (CancellationToken)token);
                 }
             }
             catch (TaskCanceledException)

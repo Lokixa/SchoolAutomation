@@ -45,6 +45,8 @@ namespace Full
 
         public void ReceiveStartMessage(object? sender, DataEventArgs<Message> eventArgs)
         {
+            //TODO Isolate message logic in message receiving service from
+            // \/\/\/\/\/\/\/\/\/\/
             if (activeMessage != null
                 && !config.SplitClass.ReplacesTeachers.Contains(activeMessage.Teacher))
             {
@@ -65,6 +67,7 @@ namespace Full
             if (bot == null) throw new NullReferenceException("Null classroom bot");
 
             string link = bot.GetClassroomMeetLink();
+            // /\/\/\/\/\ to 
             if (link != ActiveMeetLink)
             {
                 ActiveMeetLink = link;
@@ -84,7 +87,8 @@ namespace Full
                     }
                     string? teacher = activeMessage?.Teacher;
                     string? link = GetLink(activeMessage);
-                    logger?.Debug("Got teacher {0}", teacher);
+                    if (teacher != null) logger?.Debug("Got teacher {0}", teacher);
+                    else logger?.Debug("Null teacher (no active message)");
                     // No entry until right message
                     while (link == null && activeMessage != null)
                     {

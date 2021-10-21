@@ -4,9 +4,11 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using GBot;
+using GBot.Extensions;
 using GCRBot;
 using GCRBot.Data;
 using Newtonsoft.Json;
+using OpenQA.Selenium;
 
 namespace Automation
 {
@@ -31,8 +33,12 @@ namespace Automation
                     // logger.Info(post);
                     // logger.Info(bot.GetPostAfter(post));
                     Message msg = bot.GetMessage(0);
+                    bot.RefreshPage();
+                    Message newMsg = bot.GetMessage(0);
                     logger.Info(msg);
-                    logger.Info("Written comment? {0}", bot.WrittenCommentOn(msg));
+                    logger.Info(newMsg);
+                    logger.Info("old == new ? {0}", msg == newMsg);
+                    logger.Info("Written comment? {0}", bot.WrittenCommentOn(newMsg));
                     msg = bot.GetMessage(1);
                     logger.Info(msg);
                     logger.Info("Written comment? {0}", bot.WrittenCommentOn(msg));
