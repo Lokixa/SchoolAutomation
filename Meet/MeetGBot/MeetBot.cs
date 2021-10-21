@@ -123,9 +123,17 @@ namespace MeetGBot
             WebDriverWait waiter = firstLoad;
             if (InMeetCall()) waiter = shortWait;
 
-            string peopleInMeet = FetchEither(selectors[Elements.MeetPeopleButton],
-                                                           selectors[Elements.MeetPeopleButtonOnOpenChat],
-                                                           shortWait);
+            // string peopleInMeet = FetchEither(selectors[Elements.MeetPeopleButton],
+            //                                                selectors[Elements.MeetPeopleButtonOnOpenChat],
+            //                                                shortWait);
+            IWebElement el = waiter.Until(
+                driver => driver.FindElement(selectors[Elements.PeopleInMeetCount])
+                );
+            waiter.Until(driver => el.Enabled && el.Displayed);
+            string peopleInMeet = el.Text;
+
+            if (peopleInMeet == null)
+                throw new NullReferenceException("Not detectable people button");
 
             // logger.Debug("Got people in meet: {0}", peopleInMeet);
 
@@ -153,6 +161,7 @@ namespace MeetGBot
             return int.Parse(match.Value);
         }
 
+        // Deprecated
         private string FetchEither(By selector, By otherSelector, WebDriverWait waiter = null)
         {
             /*
